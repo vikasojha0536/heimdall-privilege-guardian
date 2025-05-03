@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -44,7 +45,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Plus, Trash } from 'lucide-react';
 import { createPrivilegeRequest, getPrivilegeRequest } from '@/lib/api';
-import { PrivilegeRequest } from '@/types';
+import { PrivilegeRequest } from '@/types/privileges';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -98,7 +99,7 @@ const PrivilegeForm = () => {
       state: "PENDING"
     },
     mode: "onChange"
-  })
+  });
 
   useEffect(() => {
     if (id) {
@@ -122,22 +123,18 @@ const PrivilegeForm = () => {
     }
   }, [id, navigate, form]);
 
-  const { values } = form.watch();
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    
+  const handleSubmit = async (formData: z.infer<typeof formSchema>) => {
     try {
       setSubmitting(true);
       
       // Ensure all required properties are present before submission
       const privilegeRequest: PrivilegeRequest = {
-        name: values.name || "",
-        description: values.description || "",
-        callerClientId: values.callerClientId || "",
-        calleeClientId: values.calleeClientId || "",
-        skipUserTokenExpiry: values.skipUserTokenExpiry || false,
-        privilegeRules: values.privilegeRules?.map(rule => ({
+        name: formData.name,
+        description: formData.description,
+        callerClientId: formData.callerClientId,
+        calleeClientId: formData.calleeClientId,
+        skipUserTokenExpiry: formData.skipUserTokenExpiry,
+        privilegeRules: formData.privilegeRules.map(rule => ({
           _id: rule._id || "",
           priority: rule.priority || 0,
           requestedURL: rule.requestedURL || "",
@@ -147,8 +144,8 @@ const PrivilegeForm = () => {
             fields: rule.responseModeration?.fields || "",
             responseFilterCriteria: rule.responseModeration?.responseFilterCriteria || ""
           }
-        })) || [],
-        state: values.state || "PENDING"
+        })),
+        state: formData.state || "PENDING"
       };
       
       // If there's an ID, include it in the request
@@ -180,7 +177,7 @@ const PrivilegeForm = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <Form {...form}>
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -280,7 +277,7 @@ const PrivilegeForm = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {values.privilegeRules?.map((rule, index) => (
+                  {form.watch("privilegeRules")?.map((rule, index) => (
                     <TableRow key={index}>
                       <TableCell className="font-medium">{rule.priority}</TableCell>
                       <TableCell>{rule.requestedURL}</TableCell>
@@ -291,7 +288,7 @@ const PrivilegeForm = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => {
-                            const newRules = [...values.privilegeRules];
+                            const newRules = [...form.getValues("privilegeRules")];
                             newRules.splice(index, 1);
                             form.setValue('privilegeRules', newRules);
                           }}
@@ -322,7 +319,7 @@ const PrivilegeForm = () => {
                           <div className="grid gap-4 py-4">
                             <FormField
                               control={form.control}
-                              name={`privilegeRules.${values.privilegeRules?.length}.priority` as any}
+                              name={`privilegeRules.${form.getValues("privilegeRules").length}.priority` as any}
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Priority</FormLabel>
@@ -335,7 +332,7 @@ const PrivilegeForm = () => {
                             />
                             <FormField
                               control={form.control}
-                              name={`privilegeRules.${values.privilegeRules?.length}.requestedURL` as any}
+                              name={`privilegeRules.${form.getValues("privilegeRules").length}.requestedURL` as any}
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Requested URL</FormLabel>
@@ -348,7 +345,7 @@ const PrivilegeForm = () => {
                             />
                             <FormField
                               control={form.control}
-                              name={`privilegeRules.${values.privilegeRules?.length}.scopes` as any}
+                              name={`privilegeRules.${form.getValues("privilegeRules").length}.scopes` as any}
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Scopes</FormLabel>
@@ -361,7 +358,7 @@ const PrivilegeForm = () => {
                             />
                             <FormField
                               control={form.control}
-                              name={`privilegeRules.${values.privilegeRules?.length}.requestedMethod` as any}
+                              name={`privilegeRules.${form.getValues("privilegeRules").length}.requestedMethod` as any}
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Requested Method</FormLabel>
@@ -386,12 +383,12 @@ const PrivilegeForm = () => {
                           </div>
                           <Button type="button" onClick={() => {
                             const newRule = {
-                              priority: form.getValues(`privilegeRules.${values.privilegeRules?.length}.priority` as any) || 0,
-                              requestedURL: form.getValues(`privilegeRules.${values.privilegeRules?.length}.requestedURL` as any) || "",
-                              scopes: form.getValues(`privilegeRules.${values.privilegeRules?.length}.scopes` as any)?.split(',') || [],
-                              requestedMethod: form.getValues(`privilegeRules.${values.privilegeRules?.length}.requestedMethod` as any) || "GET",
+                              priority: form.getValues(`privilegeRules.${form.getValues("privilegeRules").length}.priority` as any) || 0,
+                              requestedURL: form.getValues(`privilegeRules.${form.getValues("privilegeRules").length}.requestedURL` as any) || "",
+                              scopes: form.getValues(`privilegeRules.${form.getValues("privilegeRules").length}.scopes` as any)?.split(',') || [],
+                              requestedMethod: form.getValues(`privilegeRules.${form.getValues("privilegeRules").length}.requestedMethod` as any) || "GET",
                             };
-                            const newRules = [...values.privilegeRules, newRule];
+                            const newRules = [...form.getValues("privilegeRules"), newRule];
                             form.setValue('privilegeRules', newRules);
                           }}>Add Rule</Button>
                         </DialogContent>
