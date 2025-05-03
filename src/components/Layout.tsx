@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Shield, Key, Menu, X } from 'lucide-react';
@@ -35,14 +36,14 @@ const Layout: React.FC = () => {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-30 w-64 transform bg-card transition-transform duration-200 ease-in-out lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-30 w-64 transform bg-primary text-primary-foreground transition-transform duration-200 ease-in-out lg:static lg:translate-x-0",
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex h-16 items-center border-b px-4">
+        <div className="flex h-16 items-center border-b border-primary-foreground/20 px-4">
           <Link to="/" className="flex items-center space-x-2">
-            <Shield className="h-6 w-6 text-accent" />
-            <span className="text-xl font-bold">Heimdall</span>
+            <Shield className="h-6 w-6 text-primary-foreground" />
+            <span className="text-xl font-bold text-primary-foreground">Heimdall</span>
           </Link>
         </div>
         <nav className="space-y-1 p-2">
@@ -53,8 +54,8 @@ const Layout: React.FC = () => {
               className={cn(
                 "flex items-center rounded-md px-3 py-2 text-sm font-medium",
                 location.pathname === item.path
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-secondary hover:text-secondary-foreground"
+                  ? "bg-primary-foreground text-primary"
+                  : "hover:bg-primary-foreground/20 text-primary-foreground"
               )}
             >
               {item.icon}

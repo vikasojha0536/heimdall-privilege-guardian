@@ -1,11 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { z } from 'zod';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import {
   Form,
   FormControl,
@@ -14,120 +38,117 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
+} from "@/components/ui/form"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { Plus, Trash } from 'lucide-react';
+import { createPrivilegeRequest, getPrivilegeRequest } from '@/lib/api';
+import { PrivilegeRequest } from '@/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Separator } from '@/components/ui/separator';
-import { X, Plus, Loader, ArrowLeft } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  emptyPrivilegeRequest,
-  emptyPrivilegeRule,
-  PrivilegeRequest,
-} from '../types/privileges';
-import { createPrivilegeRequest, fetchPrivileges, getCurrentUserId } from '../services/api';
-import { isEqual } from 'lodash';
-
-const httpMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'] as const;
-
-// Form validation schema
-const privilegeRuleSchema = z.object({
-  _id: z.string().optional(),
-  priority: z.number().min(0),
-  requestedURL: z.string().url("Must be a valid URL"),
-  scopes: z.array(z.string()),
-  requestedMethod: z.enum(['GET', 'POST', 'PUT', 'DELETE', 'PATCH']),
-  responseModeration: z.object({
-    fields: z.string(),
-    responseFilterCriteria: z.string(),
-  }),
-});
 
 const formSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  callerClientId: z.string().min(1, "Caller Client ID is required"),
-  calleeClientId: z.string().min(1, "Callee Client ID is required"),
-  skipUserTokenExpiry: z.boolean(),
-  privilegeRules: z.array(privilegeRuleSchema).min(1, "At least one privilege rule is required"),
-  state: z.enum(['PENDING', 'APPROVED', 'REJECTED']),
-});
+  name: z.string().min(2, {
+    message: "Privilege name must be at least 2 characters.",
+  }),
+  description: z.string().min(10, {
+    message: "Description must be at least 10 characters.",
+  }),
+  callerClientId: z.string().min(2, {
+    message: "Caller Client ID must be at least 2 characters.",
+  }),
+  calleeClientId: z.string().min(2, {
+    message: "Callee Client ID must be at least 2 characters.",
+  }),
+  skipUserTokenExpiry: z.boolean().default(false),
+  privilegeRules: z.array(
+    z.object({
+      _id: z.string().optional(),
+      priority: z.number().default(0),
+      requestedURL: z.string().min(2, {
+        message: "Requested URL must be at least 2 characters.",
+      }),
+      scopes: z.array(z.string()).default([]),
+      requestedMethod: z.enum(["GET", "POST", "PUT", "DELETE", "PATCH"]).default("GET"),
+      responseModeration: z.object({
+        fields: z.string().optional(),
+        responseFilterCriteria: z.string().optional()
+      }).optional()
+    })
+  ).default([]),
+  state: z.enum(["PENDING", "ACTIVE", "INACTIVE"]).default("PENDING")
+})
 
-type FormValues = z.infer<typeof formSchema>;
-
-const PrivilegeForm: React.FC = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [originalFormValues, setOriginalFormValues] = useState<FormValues | null>(null);
-  const [loading, setLoading] = useState(id ? true : false);
+const PrivilegeForm = () => {
   const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const [initialValues, setInitialValues] = useState<PrivilegeRequest | null>(null);
 
-  // Initialize form with defaults
-  const form = useForm<FormValues>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: emptyPrivilegeRequest,
-  });
+    defaultValues: {
+      name: "",
+      description: "",
+      callerClientId: "",
+      calleeClientId: "",
+      skipUserTokenExpiry: false,
+      privilegeRules: [],
+      state: "PENDING"
+    },
+    mode: "onChange"
+  })
 
-  // Setup field array for privilege rules
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "privilegeRules",
-  });
-
-  // Load privilege data if editing
   useEffect(() => {
-    async function loadPrivilege() {
-      if (id) {
+    if (id) {
+      const fetchPrivilege = async () => {
         try {
-          setLoading(true);
-          const data = await fetchPrivileges();
-          const privilege = data.find((p: PrivilegeRequest) => p.id === id);
-          
+          const privilege = await getPrivilegeRequest(id);
           if (privilege) {
-            // Set form values
+            setInitialValues(privilege);
             form.reset(privilege);
-            setOriginalFormValues(privilege as FormValues);
           } else {
             toast.error("Privilege not found");
             navigate('/privileges');
           }
         } catch (error) {
-          toast.error("Failed to load privilege data");
-          console.error(error);
-        } finally {
-          setLoading(false);
+          console.error("Error fetching privilege:", error);
+          toast.error("Failed to fetch privilege");
+          navigate('/privileges');
         }
-      } else {
-        // Set caller ID automatically for new requests
-        form.setValue('callerClientId', getCurrentUserId());
-      }
+      };
+      fetchPrivilege();
     }
-
-    loadPrivilege();
   }, [id, navigate, form]);
 
-  // Handle form submission
-  const onSubmit = async (values: FormValues) => {
+  const { values } = form.watch();
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    
     try {
       setSubmitting(true);
       
       // Ensure all required properties are present before submission
       const privilegeRequest: PrivilegeRequest = {
-        name: values.name,
-        description: values.description,
-        callerClientId: values.callerClientId,
-        calleeClientId: values.calleeClientId,
-        skipUserTokenExpiry: values.skipUserTokenExpiry,
-        privilegeRules: values.privilegeRules,
-        state: values.state
+        name: values.name || "",
+        description: values.description || "",
+        callerClientId: values.callerClientId || "",
+        calleeClientId: values.calleeClientId || "",
+        skipUserTokenExpiry: values.skipUserTokenExpiry || false,
+        privilegeRules: values.privilegeRules?.map(rule => ({
+          _id: rule._id || "",
+          priority: rule.priority || 0,
+          requestedURL: rule.requestedURL || "",
+          scopes: rule.scopes || [],
+          requestedMethod: rule.requestedMethod || "GET",
+          responseModeration: {
+            fields: rule.responseModeration?.fields || "",
+            responseFilterCriteria: rule.responseModeration?.responseFilterCriteria || ""
+          }
+        })) || [],
+        state: values.state || "PENDING"
       };
       
       // If there's an ID, include it in the request
@@ -140,318 +161,277 @@ const PrivilegeForm: React.FC = () => {
       toast.success(id ? "Privilege updated successfully" : "Privilege created successfully");
       navigate('/privileges');
     } catch (error) {
-      toast.error("Failed to save privilege");
-      console.error(error);
+      console.error("Error submitting form:", error);
+      toast.error("Failed to submit privilege request");
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Check if form has been modified (for the submit button enable/disable)
-  const hasFormChanged = () => {
-    if (!originalFormValues) return true; // New form, always allow submit
-    
-    const currentValues = form.getValues();
-    return !isEqual(currentValues, originalFormValues);
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-start">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/privileges')}
-          className="mr-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {id ? "Edit Privilege Request" : "New Privilege Request"}
-          </h1>
-          <p className="text-muted-foreground">
-            {id
-              ? "Update your existing privilege request"
-              : "Create a new privilege request to another system"}
-          </p>
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <Loader className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : (
+    <Card>
+      <CardHeader>
+        <CardTitle>{id ? "Edit Privilege" : "Create Privilege"}</CardTitle>
+        <CardDescription>
+          {id
+            ? "Edit the privilege details below."
+            : "Create a new privilege by entering the details below."}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter a name for this privilege" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        A descriptive name for this privilege request
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Describe the purpose of this privilege request"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Provide details about why this privilege is needed
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="callerClientId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Caller Client ID</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Your client ID"
-                            {...field}
-                            disabled={!id ? true : false}
-                          />
-                        </FormControl>
-                        <FormDescription>Your system's identifier</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="calleeClientId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Callee Client ID</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Target system client ID" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          The system you're requesting privilege from
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="skipUserTokenExpiry"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Skip User Token Expiry</FormLabel>
-                        <FormDescription>
-                          Allow access even when user tokens have expired
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Privilege Rules</CardTitle>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => append({ ...emptyPrivilegeRule })}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Rule
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {fields.length === 0 ? (
-                  <div className="text-center py-6">
-                    <p className="text-muted-foreground">No rules added yet</p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="mt-2"
-                      onClick={() => append({ ...emptyPrivilegeRule })}
-                    >
-                      Add your first rule
-                    </Button>
-                  </div>
-                ) : (
-                  fields.map((field, index) => (
-                    <div key={field.id} className="space-y-4 rounded-lg border p-4">
-                      <div className="flex justify-between items-center">
-                        <h4 className="font-medium">Rule {index + 1}</h4>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => remove(index)}
-                          disabled={fields.length === 1}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <FormField
-                          control={form.control}
-                          name={`privilegeRules.${index}.priority`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Priority</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  {...field}
-                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`privilegeRules.${index}.requestedMethod`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>HTTP Method</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select method" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {httpMethods.map((method) => (
-                                    <SelectItem key={method} value={method}>
-                                      {method}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <FormField
-                        control={form.control}
-                        name={`privilegeRules.${index}.requestedURL`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Requested URL</FormLabel>
-                            <FormControl>
-                              <Input placeholder="https://example.com/api" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <Separator />
-
-                      <div className="space-y-4">
-                        <h5 className="font-medium text-sm">Response Moderation</h5>
-                        <FormField
-                          control={form.control}
-                          name={`privilegeRules.${index}.responseModeration.fields`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Fields</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Fields to include/exclude" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`privilegeRules.${index}.responseModeration.responseFilterCriteria`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Response Filter Criteria</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Filter criteria" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-                  ))
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Privilege Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Privilege Name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </CardContent>
-            </Card>
-
-            <div className="flex justify-end space-x-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate('/privileges')}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={submitting || (!!id && !hasFormChanged())}
-              >
-                {submitting && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-                {id ? 'Update Request' : 'Submit Request'}
-              </Button>
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Privilege Description"
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="callerClientId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Caller Client ID</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Caller Client ID" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="calleeClientId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Callee Client ID</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Callee Client ID" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="skipUserTokenExpiry"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-0.5">
+                    <FormLabel>Skip User Token Expiry</FormLabel>
+                    <FormDescription>
+                      Check this if you want to skip user token expiry.
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <div>
+              <FormLabel>Privilege Rules</FormLabel>
+              <FormDescription>
+                Add or modify privilege rules for this privilege.
+              </FormDescription>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[50px]">Priority</TableHead>
+                    <TableHead>Requested URL</TableHead>
+                    <TableHead>Scopes</TableHead>
+                    <TableHead>Method</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {values.privilegeRules?.map((rule, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{rule.priority}</TableCell>
+                      <TableCell>{rule.requestedURL}</TableCell>
+                      <TableCell>{rule.scopes?.join(', ')}</TableCell>
+                      <TableCell>{rule.requestedMethod}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const newRules = [...values.privilegeRules];
+                            newRules.splice(index, 1);
+                            form.setValue('privilegeRules', newRules);
+                          }}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-right">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button type="button" variant="outline" size="sm">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Rule
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                          <DialogHeader>
+                            <DialogTitle>Add Privilege Rule</DialogTitle>
+                            <DialogDescription>
+                              Add a new privilege rule to the privilege.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-4">
+                            <FormField
+                              control={form.control}
+                              name={`privilegeRules.${values.privilegeRules?.length}.priority` as any}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Priority</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" placeholder="Priority" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name={`privilegeRules.${values.privilegeRules?.length}.requestedURL` as any}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Requested URL</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Requested URL" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name={`privilegeRules.${values.privilegeRules?.length}.scopes` as any}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Scopes</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Scopes (comma separated)" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name={`privilegeRules.${values.privilegeRules?.length}.requestedMethod` as any}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Requested Method</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select a method" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="GET">GET</SelectItem>
+                                      <SelectItem value="POST">POST</SelectItem>
+                                      <SelectItem value="PUT">PUT</SelectItem>
+                                      <SelectItem value="DELETE">DELETE</SelectItem>
+                                      <SelectItem value="PATCH">PATCH</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <Button type="button" onClick={() => {
+                            const newRule = {
+                              priority: form.getValues(`privilegeRules.${values.privilegeRules?.length}.priority` as any) || 0,
+                              requestedURL: form.getValues(`privilegeRules.${values.privilegeRules?.length}.requestedURL` as any) || "",
+                              scopes: form.getValues(`privilegeRules.${values.privilegeRules?.length}.scopes` as any)?.split(',') || [],
+                              requestedMethod: form.getValues(`privilegeRules.${values.privilegeRules?.length}.requestedMethod` as any) || "GET",
+                            };
+                            const newRules = [...values.privilegeRules, newRule];
+                            form.setValue('privilegeRules', newRules);
+                          }}>Add Rule</Button>
+                        </DialogContent>
+                      </Dialog>
+                    </TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </div>
+
+            <FormField
+              control={form.control}
+              name="state"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>State</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a state" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="PENDING">PENDING</SelectItem>
+                      <SelectItem value="ACTIVE">ACTIVE</SelectItem>
+                      <SelectItem value="INACTIVE">INACTIVE</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "Submitting..." : "Submit"}
+            </Button>
           </form>
         </Form>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

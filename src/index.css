@@ -5,7 +5,7 @@
 
 @layer base {
   :root {
-    --background: 215 25% 98%;
+    --background: 0 0% 100%;
     --foreground: 217 33% 17%;
 
     --card: 0 0% 100%;
@@ -14,24 +14,26 @@
     --popover: 0 0% 100%;
     --popover-foreground: 217 33% 17%;
 
-    --primary: 215 60% 25%;
-    --primary-foreground: 210 40% 98%;
+    /* Deutsche Telekom Magenta Primary */
+    --primary: 328 73% 41%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 14% 92%;
-    --secondary-foreground: 217 33% 17%;
+    --secondary: 328 30% 95%;
+    --secondary-foreground: 328 73% 41%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 328 10% 96%;
+    --muted-foreground: 328 8% 46%;
 
-    --accent: 45 93% 47%;
-    --accent-foreground: 217 33% 17%;
+    /* Deutsche Telekom Accent Colors */
+    --accent: 328 73% 41%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 215 60% 25%;
+    --border: 328 20% 87%;
+    --input: 328 20% 87%;
+    --ring: 328 73% 41%;
 
     --radius: 0.5rem;
   }
@@ -46,24 +48,26 @@
     --popover: 217 33% 17%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 215 60% 50%;
-    --primary-foreground: 217 33% 17%;
+    /* Deutsche Telekom Magenta Primary - Dark mode */
+    --primary: 328 73% 60%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 216 34% 30%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 328 30% 25%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 216 34% 30%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 328 20% 25%;
+    --muted-foreground: 328 10% 70%;
 
-    --accent: 45 93% 47%;
-    --accent-foreground: 217 33% 17%;
+    /* Deutsche Telekom Accent Colors - Dark mode */
+    --accent: 328 73% 60%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 216 34% 30%;
-    --input: 216 34% 30%;
-    --ring: 215 60% 50%;
+    --border: 328 20% 30%;
+    --input: 328 20% 30%;
+    --ring: 328 73% 60%;
   }
 }
 
