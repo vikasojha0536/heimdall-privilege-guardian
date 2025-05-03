@@ -13,7 +13,7 @@ export interface PrivilegeRule {
   responseModeration: ResponseModeration;
 }
 
-export type PrivilegeState = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type PrivilegeState = 'PENDING' | 'APPROVED' | 'REJECTED' | 'ACTIVE' | 'INACTIVE';
 
 export interface PrivilegeRequest {
   id?: string;

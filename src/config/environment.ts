@@ -6,7 +6,7 @@ interface Environment {
 }
 
 export const environment: Environment = {
-  production: import.meta.env.PROD || false,
+  production: false,
   baseUrl: import.meta.env.PROD ? 'https://your-prod-backend.com' : 'http://localhost:8080',
-  useAuth: import.meta.env.PROD || false, // Only use auth in production
+  useAuth: import.meta.env.PROD, // Only use auth in production
 };

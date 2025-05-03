@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { Shield, Key, Menu, X } from 'lucide-react';
+import { Shield, Key, Menu, X, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { environment } from '@/config/environment';
@@ -9,6 +9,18 @@ import { environment } from '@/config/environment';
 const Layout: React.FC = () => {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+
+  // Simulate login/logout for development
+  const handleLogout = () => {
+    if (environment.useAuth) {
+      // In production, this would call the actual logout function
+      console.log("Logout triggered in production mode");
+      // Redirect to login page or authentication service
+    } else {
+      // In development, just show a message
+      console.log("Auth bypassed in development mode");
+    }
+  };
 
   const navItems = [
     {
@@ -86,7 +98,8 @@ const Layout: React.FC = () => {
               {environment.production ? 'Production' : 'Development'} Mode
             </span>
             {environment.useAuth ? (
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </Button>
             ) : (

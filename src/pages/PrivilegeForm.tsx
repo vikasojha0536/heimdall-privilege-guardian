@@ -30,6 +30,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogClose
 } from "@/components/ui/dialog"
 import {
   Form,
@@ -45,7 +47,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Plus, Trash } from 'lucide-react';
 import { createPrivilegeRequest, getPrivilegeRequest } from '@/lib/api';
-import { PrivilegeRequest } from '@/types/privileges';
+import { PrivilegeRequest, PrivilegeRule, emptyPrivilegeRule } from '@/types/privileges';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -77,12 +79,22 @@ const formSchema = z.object({
         responseFilterCriteria: z.string().optional()
       }).optional()
     })
-  ).default([]),
-  state: z.enum(["PENDING", "ACTIVE", "INACTIVE"]).default("PENDING")
+  ).default([])
 })
 
 const PrivilegeForm = () => {
   const [submitting, setSubmitting] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [tempRule, setTempRule] = useState<Partial<PrivilegeRule>>({
+    priority: 0,
+    requestedURL: '',
+    scopes: [],
+    requestedMethod: 'GET',
+    responseModeration: {
+      fields: '',
+      responseFilterCriteria: ''
+    }
+  });
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [initialValues, setInitialValues] = useState<PrivilegeRequest | null>(null);
@@ -96,7 +108,6 @@ const PrivilegeForm = () => {
       calleeClientId: "",
       skipUserTokenExpiry: false,
       privilegeRules: [],
-      state: "PENDING"
     },
     mode: "onChange"
   });
@@ -127,7 +138,7 @@ const PrivilegeForm = () => {
     try {
       setSubmitting(true);
       
-      // Ensure all required properties are present before submission
+      // Always set state to PENDING for new privilege requests
       const privilegeRequest: PrivilegeRequest = {
         name: formData.name,
         description: formData.description,
@@ -145,7 +156,7 @@ const PrivilegeForm = () => {
             responseFilterCriteria: rule.responseModeration?.responseFilterCriteria || ""
           }
         })),
-        state: formData.state || "PENDING"
+        state: 'PENDING' // Always set to PENDING when creating/editing
       };
       
       // If there's an ID, include it in the request
@@ -163,6 +174,51 @@ const PrivilegeForm = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const isAddRuleEnabled = () => {
+    return Boolean(
+      tempRule.requestedURL && 
+      tempRule.requestedURL.length >= 2 && 
+      tempRule.requestedMethod
+    );
+  };
+
+  const handleAddRule = () => {
+    if (!isAddRuleEnabled()) {
+      toast.error("Please fill in all required fields for the rule");
+      return;
+    }
+
+    const newRule: PrivilegeRule = {
+      _id: "",
+      priority: tempRule.priority || 0,
+      requestedURL: tempRule.requestedURL || "",
+      scopes: Array.isArray(tempRule.scopes) ? tempRule.scopes : 
+        (tempRule.scopes as unknown as string)?.split(',').filter(Boolean) || [],
+      requestedMethod: tempRule.requestedMethod || "GET",
+      responseModeration: {
+        fields: tempRule.responseModeration?.fields || "",
+        responseFilterCriteria: tempRule.responseModeration?.responseFilterCriteria || ""
+      }
+    };
+    
+    const currentRules = form.getValues("privilegeRules") || [];
+    form.setValue('privilegeRules', [...currentRules, newRule]);
+    
+    // Reset the temp rule
+    setTempRule({
+      priority: 0,
+      requestedURL: '',
+      scopes: [],
+      requestedMethod: 'GET',
+      responseModeration: {
+        fields: '',
+        responseFilterCriteria: ''
+      }
+    });
+    
+    setIsDialogOpen(false);
   };
 
   return (
@@ -281,7 +337,7 @@ const PrivilegeForm = () => {
                     <TableRow key={index}>
                       <TableCell className="font-medium">{rule.priority}</TableCell>
                       <TableCell>{rule.requestedURL}</TableCell>
-                      <TableCell>{rule.scopes?.join(', ')}</TableCell>
+                      <TableCell>{Array.isArray(rule.scopes) ? rule.scopes.join(', ') : rule.scopes}</TableCell>
                       <TableCell>{rule.requestedMethod}</TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -302,7 +358,7 @@ const PrivilegeForm = () => {
                 <TableFooter>
                   <TableRow>
                     <TableCell colSpan={5} className="text-right">
-                      <Dialog>
+                      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                         <DialogTrigger asChild>
                           <Button type="button" variant="outline" size="sm">
                             <Plus className="mr-2 h-4 w-4" />
@@ -317,80 +373,77 @@ const PrivilegeForm = () => {
                             </DialogDescription>
                           </DialogHeader>
                           <div className="grid gap-4 py-4">
-                            <FormField
-                              control={form.control}
-                              name={`privilegeRules.${form.getValues("privilegeRules").length}.priority` as any}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Priority</FormLabel>
-                                  <FormControl>
-                                    <Input type="number" placeholder="Priority" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name={`privilegeRules.${form.getValues("privilegeRules").length}.requestedURL` as any}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Requested URL</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Requested URL" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name={`privilegeRules.${form.getValues("privilegeRules").length}.scopes` as any}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Scopes</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Scopes (comma separated)" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name={`privilegeRules.${form.getValues("privilegeRules").length}.requestedMethod` as any}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Requested Method</FormLabel>
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select a method" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      <SelectItem value="GET">GET</SelectItem>
-                                      <SelectItem value="POST">POST</SelectItem>
-                                      <SelectItem value="PUT">PUT</SelectItem>
-                                      <SelectItem value="DELETE">DELETE</SelectItem>
-                                      <SelectItem value="PATCH">PATCH</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
+                            <div className="grid grid-cols-1 gap-2">
+                              <Label htmlFor="priority">Priority</Label>
+                              <Input 
+                                id="priority" 
+                                type="number" 
+                                placeholder="Priority" 
+                                value={tempRule.priority || 0}
+                                onChange={(e) => setTempRule({
+                                  ...tempRule,
+                                  priority: parseInt(e.target.value)
+                                })}
+                              />
+                            </div>
+                            <div className="grid grid-cols-1 gap-2">
+                              <Label htmlFor="requestedURL">Requested URL</Label>
+                              <Input 
+                                id="requestedURL" 
+                                placeholder="Requested URL" 
+                                value={tempRule.requestedURL || ''}
+                                onChange={(e) => setTempRule({
+                                  ...tempRule,
+                                  requestedURL: e.target.value
+                                })}
+                              />
+                            </div>
+                            <div className="grid grid-cols-1 gap-2">
+                              <Label htmlFor="scopes">Scopes</Label>
+                              <Input 
+                                id="scopes" 
+                                placeholder="Scopes (comma separated)" 
+                                value={Array.isArray(tempRule.scopes) ? tempRule.scopes.join(',') : tempRule.scopes || ''}
+                                onChange={(e) => setTempRule({
+                                  ...tempRule,
+                                  scopes: e.target.value.split(',').filter(Boolean)
+                                })}
+                              />
+                            </div>
+                            <div className="grid grid-cols-1 gap-2">
+                              <Label htmlFor="requestedMethod">Requested Method</Label>
+                              <Select 
+                                onValueChange={(value) => setTempRule({
+                                  ...tempRule, 
+                                  requestedMethod: value as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+                                })}
+                                value={tempRule.requestedMethod}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select a method" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="GET">GET</SelectItem>
+                                  <SelectItem value="POST">POST</SelectItem>
+                                  <SelectItem value="PUT">PUT</SelectItem>
+                                  <SelectItem value="DELETE">DELETE</SelectItem>
+                                  <SelectItem value="PATCH">PATCH</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
-                          <Button type="button" onClick={() => {
-                            const newRule = {
-                              priority: form.getValues(`privilegeRules.${form.getValues("privilegeRules").length}.priority` as any) || 0,
-                              requestedURL: form.getValues(`privilegeRules.${form.getValues("privilegeRules").length}.requestedURL` as any) || "",
-                              scopes: form.getValues(`privilegeRules.${form.getValues("privilegeRules").length}.scopes` as any)?.split(',') || [],
-                              requestedMethod: form.getValues(`privilegeRules.${form.getValues("privilegeRules").length}.requestedMethod` as any) || "GET",
-                            };
-                            const newRules = [...form.getValues("privilegeRules"), newRule];
-                            form.setValue('privilegeRules', newRules);
-                          }}>Add Rule</Button>
+                          <DialogFooter>
+                            <DialogClose asChild>
+                              <Button type="button" variant="outline">Cancel</Button>
+                            </DialogClose>
+                            <Button 
+                              type="button" 
+                              onClick={handleAddRule}
+                              disabled={!isAddRuleEnabled()}
+                            >
+                              Add Rule
+                            </Button>
+                          </DialogFooter>
                         </DialogContent>
                       </Dialog>
                     </TableCell>
@@ -398,29 +451,6 @@ const PrivilegeForm = () => {
                 </TableFooter>
               </Table>
             </div>
-
-            <FormField
-              control={form.control}
-              name="state"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>State</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a state" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="PENDING">PENDING</SelectItem>
-                      <SelectItem value="ACTIVE">ACTIVE</SelectItem>
-                      <SelectItem value="INACTIVE">INACTIVE</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <Button type="submit" disabled={submitting}>
               {submitting ? "Submitting..." : "Submit"}
