@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -120,7 +119,23 @@ const PrivilegeForm: React.FC = () => {
     try {
       setSubmitting(true);
       
-      const result = await createPrivilegeRequest(values);
+      // Ensure all required properties are present before submission
+      const privilegeRequest: PrivilegeRequest = {
+        name: values.name,
+        description: values.description,
+        callerClientId: values.callerClientId,
+        calleeClientId: values.calleeClientId,
+        skipUserTokenExpiry: values.skipUserTokenExpiry,
+        privilegeRules: values.privilegeRules,
+        state: values.state
+      };
+      
+      // If there's an ID, include it in the request
+      if (id) {
+        privilegeRequest.id = id;
+      }
+      
+      const result = await createPrivilegeRequest(privilegeRequest);
       
       toast.success(id ? "Privilege updated successfully" : "Privilege created successfully");
       navigate('/privileges');

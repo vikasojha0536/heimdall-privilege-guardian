@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Shield, Key, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { environment } from '@/config/environment';
 
 const Layout: React.FC = () => {
   const location = useLocation();
