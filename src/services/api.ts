@@ -17,12 +17,13 @@ const handleResponse = async (response: Response) => {
 // Get current user's ID (simulated in dev mode)
 export const getCurrentUserId = (): string => {
   // In production, this would come from the auth service
-  return localStorage.getItem('currentUserId') || 'dev-user-123';
+  return localStorage.getItem('currentUserId') || 'dot--tyrell--northbound';
 };
 
 // Fetch all privilege requests relevant to the user
 export const fetchPrivileges = async () => {
-  const response = await fetch(`${API_URL}/privileges`, {
+  const response = await fetch(`${API_URL}/privileges/dot--tyrell--westbound`, {
+
     headers: {
       'Content-Type': 'application/json',
     },
