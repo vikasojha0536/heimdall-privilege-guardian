@@ -46,8 +46,8 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Plus, Trash } from 'lucide-react';
-import { createPrivilegeRequest, getPrivilegeRequest } from '@/lib/api';
-import { PrivilegeRequest, PrivilegeRule, emptyPrivilegeRule } from '@/types/privileges';
+import { createPrivilegeRequest, getPrivilegeRequest } from '../services/api';
+import { PrivilegeRequest, PrivilegeRule, emptyPrivilegeRule } from '../types/privileges';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -219,6 +219,22 @@ const PrivilegeForm = () => {
     });
     
     setIsDialogOpen(false);
+  };
+  
+  const handleReset = () => {
+    if (id && initialValues) {
+      form.reset(initialValues);
+    } else {
+      form.reset({
+        name: "",
+        description: "",
+        callerClientId: "",
+        calleeClientId: "",
+        skipUserTokenExpiry: false,
+        privilegeRules: [],
+      });
+    }
+    toast.info("Form has been reset");
   };
 
   return (
@@ -418,6 +434,7 @@ const PrivilegeForm = () => {
                                   requestedMethod: value as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
                                 })}
                                 value={tempRule.requestedMethod}
+                                defaultValue="GET"
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select a method" />
@@ -452,9 +469,28 @@ const PrivilegeForm = () => {
               </Table>
             </div>
 
-            <Button type="submit" disabled={submitting}>
-              {submitting ? "Submitting..." : "Submit"}
-            </Button>
+            <div className="flex justify-between space-x-2">
+              <div>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => navigate('/privileges')}
+                  className="mr-2"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="secondary" 
+                  onClick={handleReset}
+                >
+                  Reset
+                </Button>
+              </div>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Submitting..." : "Submit"}
+              </Button>
+            </div>
           </form>
         </Form>
       </CardContent>

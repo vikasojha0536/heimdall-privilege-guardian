@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { PrivilegeRequest, PrivilegeState, PrivilegeUpdateRequest } from '../types/privileges';
 import { fetchPrivileges, getCurrentUserId, updatePrivilegeRequest } from '../services/api';
-import { Loader, Eye } from 'lucide-react';
+import { Loader, Eye, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -26,13 +26,30 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogDescription,
+  DialogClose
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 
 const AccessRequests: React.FC = () => {
   const [requests, setRequests] = useState<PrivilegeRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [updateLoading, setUpdateLoading] = useState<string | null>(null);
+  const [stateChangeConfirm, setStateChangeConfirm] = useState<{
+    requestId: string;
+    newState: PrivilegeState;
+  } | null>(null);
   const currentUserId = getCurrentUserId();
 
   const loadRequests = async () => {
@@ -57,6 +74,15 @@ const AccessRequests: React.FC = () => {
   }, []);
 
   const handleStateChange = async (requestId: string, newState: PrivilegeState) => {
+    // Open confirmation dialog instead of immediately changing state
+    setStateChangeConfirm({ requestId, newState });
+  };
+  
+  const confirmStateChange = async () => {
+    if (!stateChangeConfirm) return;
+    
+    const { requestId, newState } = stateChangeConfirm;
+    
     try {
       setUpdateLoading(requestId);
       const updateRequest: PrivilegeUpdateRequest = {
@@ -78,6 +104,7 @@ const AccessRequests: React.FC = () => {
       console.error(error);
     } finally {
       setUpdateLoading(null);
+      setStateChangeConfirm(null);
     }
   };
 
@@ -186,6 +213,40 @@ const AccessRequests: React.FC = () => {
           )}
         </CardContent>
       </Card>
+      
+      {/* Confirmation Dialog */}
+      <AlertDialog 
+        open={!!stateChangeConfirm} 
+        onOpenChange={(open) => !open && setStateChangeConfirm(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center">
+              <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />
+              Confirm Status Change
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to change the status to <strong>{stateChangeConfirm?.newState}</strong>?
+              {stateChangeConfirm?.newState === 'APPROVED' && (
+                <p className="mt-2 text-green-600">This will grant access privileges to the caller.</p>
+              )}
+              {stateChangeConfirm?.newState === 'REJECTED' && (
+                <p className="mt-2 text-red-600">This will deny access privileges to the caller.</p>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmStateChange}
+              className={stateChangeConfirm?.newState === 'APPROVED' ? 'bg-green-600 hover:bg-green-700' : 
+                        stateChangeConfirm?.newState === 'REJECTED' ? 'bg-red-600 hover:bg-red-700' : ''}
+            >
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

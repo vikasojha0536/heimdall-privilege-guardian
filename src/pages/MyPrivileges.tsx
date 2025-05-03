@@ -112,7 +112,7 @@ const MyPrivileges: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => navigate(`/privileges/edit/${privilege.calleeClientId}`)}
+                          onClick={() => navigate(`/privileges/edit/${privilege.id}`)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
