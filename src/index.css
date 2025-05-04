@@ -81,8 +81,3 @@
   }
 }
 
-/* Add specific styling for view components to ensure they're scrollable */
-.view-component {
-  max-height: 80vh;
-  overflow-y: auto;
-}

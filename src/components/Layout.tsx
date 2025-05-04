@@ -1,91 +1,115 @@
 
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Home, Shield, Key, LogOut } from 'lucide-react';
-import { Button } from './ui/button';
-import { useLanguage } from './LanguageProvider';
-import ThemeToggle from './ThemeToggle';
-import LanguageSelector from './LanguageSelector';
+import React, { useEffect } from 'react';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Shield, Key, Menu, X, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { environment } from '@/config/environment';
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC = () => {
   const location = useLocation();
-  const { t } = useLanguage();
+  const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
-  const isActive = (path: string) => {
-    return location.pathname === path ? 'bg-[#982166] text-white' : 'hover:bg-[#982166]/80 hover:text-white';
-  };
+  useEffect(() => {
+    // Check if user is logged in
+    const userId = localStorage.getItem('currentUserId');
+    if (!userId) {
+      navigate('/login');
+    }
+  }, [navigate]);
 
+  // Logout function
   const handleLogout = () => {
     localStorage.removeItem('currentUserId');
-    window.location.href = '/login';
+    navigate('/login');
   };
 
+  const navItems = [
+    {
+      name: 'My Privileges',
+      path: '/privileges',
+      icon: <Key className="mr-2 h-4 w-4" />,
+    },
+    {
+      name: 'Access Requests',
+      path: '/requests',
+      icon: <Shield className="mr-2 h-4 w-4" />,
+    },
+  ];
+
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="bg-[#E20074] text-white p-4">
-        <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <img
-              src="/public/lovable-uploads/c984b240-49e0-40ca-91a1-d9394eaba530.png"
-              alt="T Logo"
-              className="w-8 h-8"
-            />
-            <h1 className="text-xl font-bold">{t('welcome')}</h1>
-          </div>
-          <div className="flex items-center space-x-2">
-            <LanguageSelector />
-            <ThemeToggle />
-            <Button variant="ghost" onClick={handleLogout}>
-              <LogOut className="h-5 w-5 mr-2" /> Logout
-            </Button>
-          </div>
+    <div className="flex min-h-screen bg-background">
+      {/* Mobile sidebar overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-black/50 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div
+        className={cn(
+          "fixed inset-y-0 left-0 z-30 w-64 transform bg-[#1a1f2c] text-primary-foreground transition-transform duration-200 ease-in-out lg:static lg:translate-x-0",
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <div className="flex h-16 items-center border-b border-primary-foreground/20 px-4">
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="bg-[#E20074] rounded h-7 w-7 flex items-center justify-center">
+              <span className="text-lg font-bold text-white">T</span>
+            </div>
+            <span className="text-xl font-bold text-primary-foreground">Heimdall</span>
+          </Link>
         </div>
-      </header>
+        <nav className="space-y-1 p-2">
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "flex items-center rounded-md px-3 py-2 text-sm font-medium",
+                location.pathname === item.path
+                  ? "bg-[#E20074] text-white"
+                  : "hover:bg-primary-foreground/20 text-primary-foreground"
+              )}
+            >
+              {item.icon}
+              {item.name}
+            </Link>
+          ))}
+        </nav>
+      </div>
 
       {/* Main content */}
-      <div className="flex flex-1">
-        {/* Sidebar */}
-        <aside className="w-64 bg-[#1a1f2c] text-gray-300">
-          <nav className="p-4 space-y-2">
-            <Link to="/">
-              <Button
-                variant="ghost"
-                className={`w-full justify-start ${isActive('/')}`}
-              >
-                <Home className="mr-2 h-5 w-5" /> {t('dashboard')}
-              </Button>
-            </Link>
-            
-            <Link to="/privileges">
-              <Button
-                variant="ghost"
-                className={`w-full justify-start ${isActive('/privileges')}`}
-              >
-                <Key className="mr-2 h-5 w-5" /> {t('privileges')}
-              </Button>
-            </Link>
-            
-            <Link to="/access-requests">
-              <Button
-                variant="ghost"
-                className={`w-full justify-start ${isActive('/access-requests')}`}
-              >
-                <Shield className="mr-2 h-5 w-5" /> {t('accessRequests')}
-              </Button>
-            </Link>
-          </nav>
-        </aside>
-
-        {/* Main content - removed mx-auto from the container to align content to the left */}
-        <main className="flex-1 p-8 overflow-auto bg-background">
-          <div>
-            {children}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <header className="flex h-16 items-center justify-between border-b bg-card px-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          >
+            {isSidebarOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+          </Button>
+          <div className="flex-1" />
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-muted-foreground">
+              {environment.production ? 'Production' : 'Development'} Mode
+            </span>
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
           </div>
+        </header>
+        <main className="flex-1 overflow-auto p-6">
+          <Outlet />
         </main>
       </div>
     </div>

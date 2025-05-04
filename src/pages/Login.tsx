@@ -22,7 +22,7 @@ const Login: React.FC = () => {
         <div className="flex flex-col items-center space-y-4">
           <div className="bg-[#E20074] p-3 rounded">
             <img 
-              src="/public/lovable-uploads/c984b240-49e0-40ca-91a1-d9394eaba530.png" 
+              src="public/lovable-uploads/c984b240-49e0-40ca-91a1-d9394eaba530.png" 
               alt="T Logo" 
               className="w-8 h-8"
             />

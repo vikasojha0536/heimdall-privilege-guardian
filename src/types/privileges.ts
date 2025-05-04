@@ -38,13 +38,13 @@ export interface PrivilegeUpdateRequest {
 }
 
 export const emptyPrivilegeRule: PrivilegeRule = {
-  priority: 1, // Changed from 0 to 1
+  priority: 0,
   requestedURL: '',
   scopes: [],
   requestedMethod: 'GET',
   responseModeration: {
-    fields: null,
-    responseFilterCriteria: null
+    fields: '',
+    responseFilterCriteria: ''
   }
 };
 
