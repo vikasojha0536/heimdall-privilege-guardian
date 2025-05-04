@@ -552,7 +552,8 @@ const PrivilegeForm = () => {
                                     ...tempRule,
                                     responseModeration: {
                                       ...(tempRule.responseModeration || {}),
-                                      fields: e.target.value
+                                      fields: e.target.value || null,
+                                      responseFilterCriteria: tempRule.responseModeration?.responseFilterCriteria || null
                                     }
                                   })}
                                 />
@@ -567,7 +568,8 @@ const PrivilegeForm = () => {
                                     ...tempRule,
                                     responseModeration: {
                                       ...(tempRule.responseModeration || {}),
-                                      responseFilterCriteria: e.target.value
+                                      fields: tempRule.responseModeration?.fields || null,
+                                      responseFilterCriteria: e.target.value || null
                                     }
                                   })}
                                 />
