@@ -1,3 +1,4 @@
+
 import { environment } from "../config/environment";
 import { PrivilegeRequest, PrivilegeUpdateRequest } from "../types/privileges";
 
@@ -195,6 +196,20 @@ export const updatePrivilegeRequest = async (updateRequest: PrivilegeUpdateReque
   
   // In production, use real API
   const response = await fetch(`${API_URL}/privileges`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(updateRequest),
+  });
+  
+  return handleResponse(response);
+};
+
+// Update the state of a privilege request using the state endpoint
+export const updatePrivilegeState = async (updateRequest: PrivilegeUpdateRequest) => {
+  // In production, use real API
+  const response = await fetch(`${API_URL}/privileges/state`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',

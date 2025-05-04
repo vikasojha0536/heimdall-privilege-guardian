@@ -43,7 +43,7 @@ import {
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Plus, Trash } from 'lucide-react';
+import { Edit, Plus, Trash } from 'lucide-react';
 import { createPrivilegeRequest, getPrivilegeRequest, getCurrentUserId } from '../services/api';
 import { PrivilegeRequest, PrivilegeRule } from '../types/privileges';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -96,6 +96,9 @@ const PrivilegeForm = () => {
       responseFilterCriteria: ''
     }
   });
+  const [isEditingRule, setIsEditingRule] = useState(false);
+  const [editingRuleIndex, setEditingRuleIndex] = useState<number | null>(null);
+  
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [initialValues, setInitialValues] = useState<PrivilegeRequest | null>(null);
@@ -123,11 +126,11 @@ const PrivilegeForm = () => {
           
           console.log("Received privilege data:", privilege);
           
-          if (privilege) {
+          if (privilege && Array.isArray(privilege) && privilege.length > 0) {
             // Map the API response to match our form schema
             const formattedPrivilege = {
-              ...privilege,
-              privilegeRules: privilege[0]?.privilegeRules.map(rule => ({
+              ...privilege[0],
+              privilegeRules: privilege[0]?.privilegeRules?.map(rule => ({
                 ...rule,
                 _id: rule.id || rule._id || "",
                 requestedMethod: rule.requestedMethod || "GET",
@@ -136,7 +139,7 @@ const PrivilegeForm = () => {
                   fields: rule.responseModeration?.fields || "",
                   responseFilterCriteria: rule.responseModeration?.responseFilterCriteria || ""
                 }
-              }))
+              })) || []
             };
             
             setInitialValues(formattedPrivilege);
@@ -209,15 +212,29 @@ const PrivilegeForm = () => {
     );
   };
 
-  const handleAddRule = () => {
+  const handleEditRule = (index: number) => {
+    const rule = form.getValues("privilegeRules")[index];
+    setTempRule({
+      ...rule,
+      scopes: Array.isArray(rule.scopes) ? rule.scopes : 
+        (rule.scopes as unknown as string)?.split(',').filter(Boolean) || [],
+    });
+    setIsEditingRule(true);
+    setEditingRuleIndex(index);
+    setIsDialogOpen(true);
+  };
+
+  const handleSaveRule = () => {
     if (!isAddRuleEnabled()) {
       toast.error("Please fill in all required fields for the rule");
       return;
     }
 
     const newRule: PrivilegeRule = {
-      _id: "",
+      _id: tempRule._id || "",
+      id: tempRule.id || "",
       priority: tempRule.priority || 0,
+      description: tempRule.description || null,
       requestedURL: tempRule.requestedURL || "",
       scopes: Array.isArray(tempRule.scopes) ? tempRule.scopes : 
         (tempRule.scopes as unknown as string)?.split(',').filter(Boolean) || [],
@@ -229,7 +246,17 @@ const PrivilegeForm = () => {
     };
     
     const currentRules = form.getValues("privilegeRules") || [];
-    form.setValue('privilegeRules', [...currentRules, newRule]);
+    
+    if (isEditingRule && editingRuleIndex !== null) {
+      // Update existing rule
+      currentRules[editingRuleIndex] = newRule;
+      form.setValue('privilegeRules', [...currentRules]);
+      setIsEditingRule(false);
+      setEditingRuleIndex(null);
+    } else {
+      // Add new rule
+      form.setValue('privilegeRules', [...currentRules, newRule]);
+    }
     
     // Reset the temp rule
     setTempRule({
@@ -389,6 +416,14 @@ const PrivilegeForm = () => {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => handleEditRule(index)}
+                          className="mr-1"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => {
                             const newRules = [...form.getValues("privilegeRules")];
                             newRules.splice(index, 1);
@@ -413,9 +448,13 @@ const PrivilegeForm = () => {
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[425px]">
                           <DialogHeader>
-                            <DialogTitle>Add Privilege Rule</DialogTitle>
+                            <DialogTitle>
+                              {isEditingRule ? "Edit Privilege Rule" : "Add Privilege Rule"}
+                            </DialogTitle>
                             <DialogDescription>
-                              Add a new privilege rule to the privilege.
+                              {isEditingRule 
+                                ? "Edit the privilege rule details below." 
+                                : "Add a new privilege rule to the privilege."}
                             </DialogDescription>
                           </DialogHeader>
                           <div className="grid gap-4 py-4">
@@ -429,6 +468,18 @@ const PrivilegeForm = () => {
                                 onChange={(e) => setTempRule({
                                   ...tempRule,
                                   priority: parseInt(e.target.value)
+                                })}
+                              />
+                            </div>
+                            <div className="grid grid-cols-1 gap-2">
+                              <Label htmlFor="description">Description</Label>
+                              <Input 
+                                id="description" 
+                                placeholder="Description (optional)" 
+                                value={tempRule.description || ''}
+                                onChange={(e) => setTempRule({
+                                  ...tempRule,
+                                  description: e.target.value
                                 })}
                               />
                             </div>
@@ -517,10 +568,10 @@ const PrivilegeForm = () => {
                             </DialogClose>
                             <Button 
                               type="button" 
-                              onClick={handleAddRule}
+                              onClick={handleSaveRule}
                               disabled={!isAddRuleEnabled()}
                             >
-                              Add Rule
+                              {isEditingRule ? "Save Changes" : "Add Rule"}
                             </Button>
                           </DialogFooter>
                         </DialogContent>

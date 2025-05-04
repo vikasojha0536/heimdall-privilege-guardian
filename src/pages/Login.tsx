@@ -21,7 +21,11 @@ const Login: React.FC = () => {
       <div className="w-full max-w-md p-8 bg-[#232838] rounded-lg shadow-lg">
         <div className="flex flex-col items-center space-y-4">
           <div className="bg-[#E20074] p-3 rounded">
-            <span className="text-3xl font-bold text-white">T</span>
+            <img 
+              src="public/lovable-uploads/c984b240-49e0-40ca-91a1-d9394eaba530.png" 
+              alt="T Logo" 
+              className="w-8 h-8"
+            />
           </div>
           
           <h1 className="text-3xl font-bold text-white mt-4">Welcome to Heimdall</h1>

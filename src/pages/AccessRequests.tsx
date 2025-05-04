@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { PrivilegeRequest, PrivilegeState, PrivilegeUpdateRequest } from '../types/privileges';
-import { fetchPrivileges, getCurrentUserId, updatePrivilegeRequest } from '../services/api';
+import { fetchPrivileges, getCurrentUserId, updatePrivilegeState } from '../services/api';
 import { Loader, Eye, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,6 +38,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
+import PrivilegeReadOnly from '../components/PrivilegeReadOnly';
 
 const AccessRequests: React.FC = () => {
   const [requests, setRequests] = useState<PrivilegeRequest[]>([]);
@@ -54,9 +55,9 @@ const AccessRequests: React.FC = () => {
       setLoading(true);
       const data = await fetchPrivileges(currentUserId, "callee");
       // Filter for requests where the current user is the callee
-      const calleeRequests = data.filter(
+      const calleeRequests = Array.isArray(data) ? data.filter(
         (req: PrivilegeRequest) => req.calleeClientId === currentUserId
-      );
+      ) : [];
       setRequests(calleeRequests);
     } catch (error) {
       toast.error('Failed to load access requests');
@@ -87,7 +88,7 @@ const AccessRequests: React.FC = () => {
         state: newState,
       };
       
-      await updatePrivilegeRequest(updateRequest);
+      await updatePrivilegeState(updateRequest);
       
       setRequests((prevRequests) =>
         prevRequests.map((req) =>
@@ -103,21 +104,6 @@ const AccessRequests: React.FC = () => {
       setUpdateLoading(null);
       setStateChangeConfirm(null);
     }
-  };
-
-  const RequestDetails: React.FC<{ request: PrivilegeRequest }> = ({ request }) => {
-    return (
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium">Request Details</h4>
-          <div className="rounded-md bg-secondary p-4">
-            <pre className="text-xs whitespace-pre-wrap overflow-auto max-h-[400px]">
-              {JSON.stringify(request, null, 2)}
-            </pre>
-          </div>
-        </div>
-      </div>
-    );
   };
 
   return (
@@ -200,7 +186,7 @@ const AccessRequests: React.FC = () => {
                             <DialogHeader>
                               <DialogTitle>{request.name}</DialogTitle>
                             </DialogHeader>
-                            <RequestDetails request={request} />
+                            <PrivilegeReadOnly privilege={request} />
                           </DialogContent>
                         </Dialog>
                       </TableCell>
