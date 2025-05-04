@@ -1,8 +1,9 @@
 
 import React, { useEffect, useState } from 'react';
-import { PrivilegeRequest, PrivilegeState, PrivilegeUpdateRequest } from '../types/privileges';
+import { useNavigate } from 'react-router-dom';
+import { PrivilegeRequest, PrivilegeRule, PrivilegeState, PrivilegeUpdateRequest } from '../types/privileges';
 import { fetchPrivileges, getCurrentUserId, updatePrivilegeState } from '../services/api';
-import { Loader, Eye, AlertTriangle } from 'lucide-react';
+import { Loader, Eye, AlertTriangle, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -38,6 +39,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 import PrivilegeReadOnly from '../components/PrivilegeReadOnly';
 
 const AccessRequests: React.FC = () => {
@@ -47,8 +49,10 @@ const AccessRequests: React.FC = () => {
   const [stateChangeConfirm, setStateChangeConfirm] = useState<{
     requestId: string;
     newState: PrivilegeState;
+    currentState: PrivilegeState;
   } | null>(null);
   const currentUserId = getCurrentUserId();
+  const navigate = useNavigate();
 
   const loadRequests = async () => {
     try {
@@ -71,9 +75,15 @@ const AccessRequests: React.FC = () => {
     loadRequests();
   }, []);
 
-  const handleStateChange = async (requestId: string, newState: PrivilegeState) => {
-    // Open confirmation dialog instead of immediately changing state
-    setStateChangeConfirm({ requestId, newState });
+  const handleStateChange = async (requestId: string, newState: PrivilegeState, currentState: PrivilegeState) => {
+    // Check if the state transition is allowed
+    if ((currentState === 'REJECTED' || currentState === 'GRANTED') && newState === 'PENDING') {
+      toast.error('Cannot change state back to PENDING from REJECTED or GRANTED');
+      return;
+    }
+    
+    // Open confirmation dialog
+    setStateChangeConfirm({ requestId, newState, currentState });
   };
   
   const confirmStateChange = async () => {
@@ -103,6 +113,29 @@ const AccessRequests: React.FC = () => {
     } finally {
       setUpdateLoading(null);
       setStateChangeConfirm(null);
+    }
+  };
+
+  const handleEdit = (requestId: string) => {
+    navigate(`/privileges/edit/${requestId}`);
+  };
+
+  const renderStatusBadge = (state: PrivilegeState) => {
+    switch (state) {
+      case 'PENDING':
+        return <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">Pending</Badge>;
+      case 'APPROVED':
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">Approved</Badge>;
+      case 'REJECTED':
+        return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">Rejected</Badge>;
+      case 'GRANTED':
+        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Granted</Badge>;
+      case 'ACTIVE':
+        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Active</Badge>;
+      case 'INACTIVE':
+        return <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">Inactive</Badge>;
+      default:
+        return <Badge variant="outline">{state}</Badge>;
     }
   };
 
@@ -149,46 +182,57 @@ const AccessRequests: React.FC = () => {
                         {request.description}
                       </TableCell>
                       <TableCell>
-                        <Select
-                          value={request.state}
-                          onValueChange={(value) => 
-                            handleStateChange(request.id!, value as PrivilegeState)
-                          }
-                          disabled={updateLoading === request.id}
-                        >
-                          <SelectTrigger className="w-32">
-                            {updateLoading === request.id ? (
-                              <div className="flex items-center">
-                                <Loader className="h-3 w-3 animate-spin mr-2" />
-                                <SelectValue />
-                              </div>
-                            ) : (
-                              <SelectValue />
-                            )}
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value={request.state}>{request.state}</SelectItem>
-                            {request.state !== "PENDING" && <SelectItem value="PENDING">PENDING</SelectItem>}
-                            {request.state !== "APPROVED" && <SelectItem value="APPROVED">APPROVED</SelectItem>}
-                            {request.state !== "REJECTED" && <SelectItem value="REJECTED">REJECTED</SelectItem>}
-                            {request.state !== "GRANTED" && <SelectItem value="GRANTED">GRANTED</SelectItem>}
-                          </SelectContent>
-                        </Select>
+                        <div className="flex items-center">
+                          {renderStatusBadge(request.state)}
+                          {request.state !== 'REJECTED' && request.state !== 'GRANTED' && (
+                            <Select
+                              value={request.state}
+                              onValueChange={(value) => 
+                                handleStateChange(request.id!, value as PrivilegeState, request.state)
+                              }
+                              disabled={updateLoading === request.id}
+                            >
+                              <SelectTrigger className="w-32 ml-2">
+                                {updateLoading === request.id ? (
+                                  <div className="flex items-center">
+                                    <Loader className="h-3 w-3 animate-spin mr-2" />
+                                    <SelectValue />
+                                  </div>
+                                ) : (
+                                  <SelectValue />
+                                )}
+                              </SelectTrigger>
+                              <SelectContent>
+                                {request.state !== 'PENDING' && <SelectItem value="PENDING">PENDING</SelectItem>}
+                                {request.state !== 'APPROVED' && <SelectItem value="APPROVED">APPROVED</SelectItem>}
+                                {request.state !== 'REJECTED' && <SelectItem value="REJECTED">REJECTED</SelectItem>}
+                                {request.state !== 'GRANTED' && <SelectItem value="GRANTED">GRANTED</SelectItem>}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" className="mr-1">
                               <Eye className="h-4 w-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-3xl">
+                          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
                             <DialogHeader>
                               <DialogTitle>{request.name}</DialogTitle>
                             </DialogHeader>
                             <PrivilegeReadOnly privilege={request} />
                           </DialogContent>
                         </Dialog>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => handleEdit(request.id!)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}

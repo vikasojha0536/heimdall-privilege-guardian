@@ -43,9 +43,9 @@ import {
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Edit, Plus, Trash } from 'lucide-react';
+import { Edit, Eye, Plus, Trash } from 'lucide-react';
 import { createPrivilegeRequest, getPrivilegeRequest, getCurrentUserId } from '../services/api';
-import { PrivilegeRequest, PrivilegeRule } from '../types/privileges';
+import { PrivilegeRequest, PrivilegeRule, ResponseModeration } from '../types/privileges';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -68,7 +68,7 @@ const formSchema = z.object({
     z.object({
       _id: z.string().optional(),
       id: z.string().optional(),
-      priority: z.number().default(0),
+      priority: z.number().default(1),
       description: z.string().nullable().optional(),
       requestedURL: z.string().min(2, {
         message: "Requested URL must be at least 2 characters.",
@@ -78,7 +78,7 @@ const formSchema = z.object({
       responseModeration: z.object({
         fields: z.string().nullable().optional(),
         responseFilterCriteria: z.string().nullable().optional()
-      }).optional()
+      })
     })
   ).default([])
 });
@@ -87,7 +87,7 @@ const PrivilegeForm = () => {
   const [submitting, setSubmitting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tempRule, setTempRule] = useState<Partial<PrivilegeRule>>({
-    priority: 0,
+    priority: 1,
     requestedURL: '',
     scopes: [],
     requestedMethod: 'GET',
@@ -174,7 +174,7 @@ const PrivilegeForm = () => {
         skipUserTokenExpiry: formData.skipUserTokenExpiry,
         privilegeRules: formData.privilegeRules.map(rule => ({
           id: rule.id || rule._id || "",
-          priority: rule.priority || 0,
+          priority: rule.priority || 1,
           description: rule.description || null,
           requestedURL: rule.requestedURL || "",
           scopes: rule.scopes || [],
@@ -233,7 +233,7 @@ const PrivilegeForm = () => {
     const newRule: PrivilegeRule = {
       _id: tempRule._id || "",
       id: tempRule.id || "",
-      priority: tempRule.priority || 0,
+      priority: tempRule.priority || 1,
       description: tempRule.description || null,
       requestedURL: tempRule.requestedURL || "",
       scopes: Array.isArray(tempRule.scopes) ? tempRule.scopes : 
@@ -260,7 +260,7 @@ const PrivilegeForm = () => {
     
     // Reset the temp rule
     setTempRule({
-      priority: 0,
+      priority: 1,
       requestedURL: '',
       scopes: [],
       requestedMethod: 'GET',
@@ -460,16 +460,22 @@ const PrivilegeForm = () => {
                           <div className="grid gap-4 py-4">
                             <div className="grid grid-cols-1 gap-2">
                               <Label htmlFor="priority">Priority</Label>
-                              <Input 
-                                id="priority" 
-                                type="number" 
-                                placeholder="Priority" 
-                                value={tempRule.priority || 0}
-                                onChange={(e) => setTempRule({
+                              <Select
+                                value={String(tempRule.priority || 1)}
+                                onValueChange={(value) => setTempRule({
                                   ...tempRule,
-                                  priority: parseInt(e.target.value)
+                                  priority: parseInt(value)
                                 })}
-                              />
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select priority" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {[1, 2, 3, 4, 5].map((p) => (
+                                    <SelectItem key={p} value={String(p)}>{p}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </div>
                             <div className="grid grid-cols-1 gap-2">
                               <Label htmlFor="description">Description</Label>
@@ -510,12 +516,11 @@ const PrivilegeForm = () => {
                             <div className="grid grid-cols-1 gap-2">
                               <Label htmlFor="requestedMethod">Requested Method</Label>
                               <Select 
+                                value={tempRule.requestedMethod || "GET"}
                                 onValueChange={(value) => setTempRule({
                                   ...tempRule, 
-                                  requestedMethod: value as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD'
+                                  requestedMethod: value as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD' | ''
                                 })}
-                                value={tempRule.requestedMethod}
-                                defaultValue="GET"
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select a method" />
@@ -531,35 +536,39 @@ const PrivilegeForm = () => {
                                 </SelectContent>
                               </Select>
                             </div>
-                            <div className="grid grid-cols-1 gap-2">
-                              <Label htmlFor="fields">Response Fields</Label>
-                              <Input 
-                                id="fields" 
-                                placeholder="Response Fields" 
-                                value={tempRule.responseModeration?.fields || ''}
-                                onChange={(e) => setTempRule({
-                                  ...tempRule,
-                                  responseModeration: {
-                                    ...tempRule.responseModeration!,
-                                    fields: e.target.value
-                                  }
-                                })}
-                              />
-                            </div>
-                            <div className="grid grid-cols-1 gap-2">
-                              <Label htmlFor="responseFilterCriteria">Response Filter Criteria</Label>
-                              <Input 
-                                id="responseFilterCriteria" 
-                                placeholder="Response Filter Criteria" 
-                                value={tempRule.responseModeration?.responseFilterCriteria || ''}
-                                onChange={(e) => setTempRule({
-                                  ...tempRule,
-                                  responseModeration: {
-                                    ...tempRule.responseModeration!,
-                                    responseFilterCriteria: e.target.value
-                                  }
-                                })}
-                              />
+                            
+                            <div className="grid grid-cols-1 gap-2 border p-4 rounded-md">
+                              <h4 className="font-medium mb-2">Response Moderation</h4>
+                              <div className="grid grid-cols-1 gap-2">
+                                <Label htmlFor="fields">Response Fields</Label>
+                                <Input 
+                                  id="fields" 
+                                  placeholder="Response Fields" 
+                                  value={tempRule.responseModeration?.fields || ''}
+                                  onChange={(e) => setTempRule({
+                                    ...tempRule,
+                                    responseModeration: {
+                                      ...(tempRule.responseModeration || {}),
+                                      fields: e.target.value
+                                    }
+                                  })}
+                                />
+                              </div>
+                              <div className="grid grid-cols-1 gap-2">
+                                <Label htmlFor="responseFilterCriteria">Response Filter Criteria</Label>
+                                <Input 
+                                  id="responseFilterCriteria" 
+                                  placeholder="Response Filter Criteria" 
+                                  value={tempRule.responseModeration?.responseFilterCriteria || ''}
+                                  onChange={(e) => setTempRule({
+                                    ...tempRule,
+                                    responseModeration: {
+                                      ...(tempRule.responseModeration || {}),
+                                      responseFilterCriteria: e.target.value
+                                    }
+                                  })}
+                                />
+                              </div>
                             </div>
                           </div>
                           <DialogFooter>
