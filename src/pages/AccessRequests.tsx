@@ -26,9 +26,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
-  DialogDescription,
-  DialogClose
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -184,9 +181,11 @@ const AccessRequests: React.FC = () => {
                             )}
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="PENDING">Pending</SelectItem>
-                            <SelectItem value="APPROVED">Approved</SelectItem>
-                            <SelectItem value="REJECTED">Rejected</SelectItem>
+                            <SelectItem value={request.state}>{request.state}</SelectItem>
+                            {request.state !== "PENDING" && <SelectItem value="PENDING">PENDING</SelectItem>}
+                            {request.state !== "APPROVED" && <SelectItem value="APPROVED">APPROVED</SelectItem>}
+                            {request.state !== "REJECTED" && <SelectItem value="REJECTED">REJECTED</SelectItem>}
+                            {request.state !== "GRANTED" && <SelectItem value="GRANTED">GRANTED</SelectItem>}
                           </SelectContent>
                         </Select>
                       </TableCell>
@@ -233,14 +232,18 @@ const AccessRequests: React.FC = () => {
               {stateChangeConfirm?.newState === 'REJECTED' && (
                 <p className="mt-2 text-red-600">This will deny access privileges to the caller.</p>
               )}
+              {stateChangeConfirm?.newState === 'GRANTED' && (
+                <p className="mt-2 text-green-600">This will grant access privileges to the caller.</p>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmStateChange}
-              className={stateChangeConfirm?.newState === 'APPROVED' ? 'bg-green-600 hover:bg-green-700' : 
-                        stateChangeConfirm?.newState === 'REJECTED' ? 'bg-red-600 hover:bg-red-700' : ''}
+              className={stateChangeConfirm?.newState === 'APPROVED' || stateChangeConfirm?.newState === 'GRANTED' ? 
+                'bg-green-600 hover:bg-green-700' : 
+                stateChangeConfirm?.newState === 'REJECTED' ? 'bg-red-600 hover:bg-red-700' : ''}
             >
               Confirm
             </AlertDialogAction>

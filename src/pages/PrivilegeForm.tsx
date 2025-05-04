@@ -10,19 +10,17 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableFooter,
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +30,7 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogClose
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -41,15 +39,16 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+} from "@/components/ui/form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { Plus, Trash } from 'lucide-react';
-import { createPrivilegeRequest, getPrivilegeRequest } from '../services/api';
-import { PrivilegeRequest, PrivilegeRule, emptyPrivilegeRule } from '../types/privileges';
+import { createPrivilegeRequest, getPrivilegeRequest, getCurrentUserId } from '../services/api';
+import { PrivilegeRequest, PrivilegeRule } from '../types/privileges';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -68,19 +67,21 @@ const formSchema = z.object({
   privilegeRules: z.array(
     z.object({
       _id: z.string().optional(),
+      id: z.string().optional(),
       priority: z.number().default(0),
+      description: z.string().nullable().optional(),
       requestedURL: z.string().min(2, {
         message: "Requested URL must be at least 2 characters.",
       }),
       scopes: z.array(z.string()).default([]),
-      requestedMethod: z.enum(["GET", "POST", "PUT", "DELETE", "PATCH"]).default("GET"),
+      requestedMethod: z.enum(["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD", ""]).default("GET"),
       responseModeration: z.object({
-        fields: z.string().optional(),
-        responseFilterCriteria: z.string().optional()
+        fields: z.string().nullable().optional(),
+        responseFilterCriteria: z.string().nullable().optional()
       }).optional()
     })
   ).default([])
-})
+});
 
 const PrivilegeForm = () => {
   const [submitting, setSubmitting] = useState(false);
@@ -98,13 +99,14 @@ const PrivilegeForm = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [initialValues, setInitialValues] = useState<PrivilegeRequest | null>(null);
+  const currentUserId = getCurrentUserId();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       description: "",
-      callerClientId: "",
+      callerClientId: currentUserId,
       calleeClientId: "",
       skipUserTokenExpiry: false,
       privilegeRules: [],
@@ -116,10 +118,31 @@ const PrivilegeForm = () => {
     if (id) {
       const fetchPrivilege = async () => {
         try {
+          console.log("Fetching privilege with ID:", id);
           const privilege = await getPrivilegeRequest(id);
+          
+          console.log("Received privilege data:", privilege);
+          
           if (privilege) {
-            setInitialValues(privilege);
-            form.reset(privilege);
+            // Map the API response to match our form schema
+            const formattedPrivilege = {
+              ...privilege,
+              privilegeRules: privilege.privilegeRules.map(rule => ({
+                ...rule,
+                _id: rule.id || rule._id || "",
+                requestedMethod: rule.requestedMethod || "GET",
+                scopes: Array.isArray(rule.scopes) ? rule.scopes : [],
+                responseModeration: {
+                  fields: rule.responseModeration?.fields || "",
+                  responseFilterCriteria: rule.responseModeration?.responseFilterCriteria || ""
+                }
+              }))
+            };
+            
+            setInitialValues(formattedPrivilege);
+            form.reset(formattedPrivilege);
+            
+            console.log("Form reset with values:", formattedPrivilege);
           } else {
             toast.error("Privilege not found");
             navigate('/privileges');
@@ -130,6 +153,7 @@ const PrivilegeForm = () => {
           navigate('/privileges');
         }
       };
+      
       fetchPrivilege();
     }
   }, [id, navigate, form]);
@@ -138,7 +162,7 @@ const PrivilegeForm = () => {
     try {
       setSubmitting(true);
       
-      // Always set state to PENDING for new privilege requests
+      // Always set state to PENDING for privilege requests
       const privilegeRequest: PrivilegeRequest = {
         name: formData.name,
         description: formData.description,
@@ -146,8 +170,9 @@ const PrivilegeForm = () => {
         calleeClientId: formData.calleeClientId,
         skipUserTokenExpiry: formData.skipUserTokenExpiry,
         privilegeRules: formData.privilegeRules.map(rule => ({
-          _id: rule._id || "",
+          id: rule.id || rule._id || "",
           priority: rule.priority || 0,
+          description: rule.description || null,
           requestedURL: rule.requestedURL || "",
           scopes: rule.scopes || [],
           requestedMethod: rule.requestedMethod || "GET",
@@ -196,7 +221,7 @@ const PrivilegeForm = () => {
       requestedURL: tempRule.requestedURL || "",
       scopes: Array.isArray(tempRule.scopes) ? tempRule.scopes : 
         (tempRule.scopes as unknown as string)?.split(',').filter(Boolean) || [],
-      requestedMethod: tempRule.requestedMethod || "GET",
+      requestedMethod: tempRule.requestedMethod as any || "GET",
       responseModeration: {
         fields: tempRule.responseModeration?.fields || "",
         responseFilterCriteria: tempRule.responseModeration?.responseFilterCriteria || ""
@@ -224,17 +249,22 @@ const PrivilegeForm = () => {
   const handleReset = () => {
     if (id && initialValues) {
       form.reset(initialValues);
+      toast.info("Form has been reset to original values");
     } else {
       form.reset({
         name: "",
         description: "",
-        callerClientId: "",
+        callerClientId: currentUserId,
         calleeClientId: "",
         skipUserTokenExpiry: false,
         privilegeRules: [],
       });
+      toast.info("Form has been cleared");
     }
-    toast.info("Form has been reset");
+  };
+
+  const handleCancel = () => {
+    navigate('/privileges');
   };
 
   return (
@@ -431,7 +461,7 @@ const PrivilegeForm = () => {
                               <Select 
                                 onValueChange={(value) => setTempRule({
                                   ...tempRule, 
-                                  requestedMethod: value as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+                                  requestedMethod: value as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD'
                                 })}
                                 value={tempRule.requestedMethod}
                                 defaultValue="GET"
@@ -445,8 +475,40 @@ const PrivilegeForm = () => {
                                   <SelectItem value="PUT">PUT</SelectItem>
                                   <SelectItem value="DELETE">DELETE</SelectItem>
                                   <SelectItem value="PATCH">PATCH</SelectItem>
+                                  <SelectItem value="OPTIONS">OPTIONS</SelectItem>
+                                  <SelectItem value="HEAD">HEAD</SelectItem>
                                 </SelectContent>
                               </Select>
+                            </div>
+                            <div className="grid grid-cols-1 gap-2">
+                              <Label htmlFor="fields">Response Fields</Label>
+                              <Input 
+                                id="fields" 
+                                placeholder="Response Fields" 
+                                value={tempRule.responseModeration?.fields || ''}
+                                onChange={(e) => setTempRule({
+                                  ...tempRule,
+                                  responseModeration: {
+                                    ...tempRule.responseModeration!,
+                                    fields: e.target.value
+                                  }
+                                })}
+                              />
+                            </div>
+                            <div className="grid grid-cols-1 gap-2">
+                              <Label htmlFor="responseFilterCriteria">Response Filter Criteria</Label>
+                              <Input 
+                                id="responseFilterCriteria" 
+                                placeholder="Response Filter Criteria" 
+                                value={tempRule.responseModeration?.responseFilterCriteria || ''}
+                                onChange={(e) => setTempRule({
+                                  ...tempRule,
+                                  responseModeration: {
+                                    ...tempRule.responseModeration!,
+                                    responseFilterCriteria: e.target.value
+                                  }
+                                })}
+                              />
                             </div>
                           </div>
                           <DialogFooter>
@@ -474,7 +536,7 @@ const PrivilegeForm = () => {
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={() => navigate('/privileges')}
+                  onClick={handleCancel}
                   className="mr-2"
                 >
                   Cancel

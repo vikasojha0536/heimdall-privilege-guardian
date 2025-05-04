@@ -1,16 +1,18 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { User } from 'lucide-react';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const [clientId, setClientId] = useState('dot--tyrell--westbound');
 
   const handleLogin = () => {
-    // In a real implementation, this would trigger the OAuth flow
-    // For development, we'll just navigate to the dashboard
-    localStorage.setItem('currentUserId', 'dot--tyrell--westbound');
+    // Store the client ID in local storage
+    localStorage.setItem('currentUserId', clientId);
     navigate('/');
   };
 
@@ -22,11 +24,22 @@ const Login: React.FC = () => {
             <span className="text-3xl font-bold text-white">T</span>
           </div>
           
-          <h1 className="text-3xl font-bold text-white mt-4">Welcome to OrchesTT</h1>
+          <h1 className="text-3xl font-bold text-white mt-4">Welcome to Heimdall</h1>
           <p className="text-gray-300">Sign in to access your dashboard</p>
           
+          <div className="w-full mt-6">
+            <Label htmlFor="clientId" className="text-gray-300">Client ID</Label>
+            <Input 
+              id="clientId"
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+              className="bg-[#2d344a] border-gray-700 text-white mt-1"
+              placeholder="Enter your client ID"
+            />
+          </div>
+          
           <div className="w-full bg-[#2d344a] p-4 rounded mt-4 text-center text-gray-300">
-            Development Mode Active - Using Automatic Login
+            Development Mode Active - Using Client ID Login
           </div>
           
           <Button 

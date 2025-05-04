@@ -1,19 +1,21 @@
 
 export interface ResponseModeration {
-  fields: string;
-  responseFilterCriteria: string;
+  fields: string | null;
+  responseFilterCriteria: string | null;
 }
 
 export interface PrivilegeRule {
-  _id: string;
+  _id?: string;
+  id?: string;
   priority: number;
+  description?: string | null;
   requestedURL: string;
   scopes: string[];
-  requestedMethod: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  requestedMethod: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD' | '';
   responseModeration: ResponseModeration;
 }
 
-export type PrivilegeState = 'PENDING' | 'APPROVED' | 'REJECTED' | 'ACTIVE' | 'INACTIVE';
+export type PrivilegeState = 'PENDING' | 'APPROVED' | 'REJECTED' | 'GRANTED' | 'ACTIVE' | 'INACTIVE';
 
 export interface PrivilegeRequest {
   id?: string;
@@ -21,9 +23,11 @@ export interface PrivilegeRequest {
   description: string;
   callerClientId: string;
   calleeClientId: string;
-  skipUserTokenExpiry: boolean;
+  skipUserTokenExpiry?: boolean;
   privilegeRules: PrivilegeRule[];
   state: PrivilegeState;
+  createdAt?: string | null;
+  updatedAt?: string | null;
 }
 
 export interface PrivilegeUpdateRequest {
@@ -32,7 +36,6 @@ export interface PrivilegeUpdateRequest {
 }
 
 export const emptyPrivilegeRule: PrivilegeRule = {
-  _id: '',
   priority: 0,
   requestedURL: '',
   scopes: [],
@@ -49,6 +52,6 @@ export const emptyPrivilegeRequest: PrivilegeRequest = {
   callerClientId: '',
   calleeClientId: '',
   skipUserTokenExpiry: false,
-  privilegeRules: [{ ...emptyPrivilegeRule }],
+  privilegeRules: [],
   state: 'PENDING'
 };

@@ -47,7 +47,8 @@ const MyPrivileges: React.FC = () => {
   const getStateBadge = (state: string) => {
     switch (state) {
       case 'APPROVED':
-        return <Badge className="bg-green-500">Approved</Badge>;
+      case 'GRANTED':
+        return <Badge className="bg-green-500">{state}</Badge>;
       case 'REJECTED':
         return <Badge variant="destructive">Rejected</Badge>;
       case 'PENDING':
