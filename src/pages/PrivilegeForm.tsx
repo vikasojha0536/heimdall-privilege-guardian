@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -92,8 +91,8 @@ const PrivilegeForm = () => {
     scopes: [],
     requestedMethod: 'GET',
     responseModeration: {
-      fields: '',
-      responseFilterCriteria: ''
+      fields: null,
+      responseFilterCriteria: null
     }
   });
   const [isEditingRule, setIsEditingRule] = useState(false);
@@ -136,8 +135,8 @@ const PrivilegeForm = () => {
                 requestedMethod: rule.requestedMethod || "GET",
                 scopes: Array.isArray(rule.scopes) ? rule.scopes : [],
                 responseModeration: {
-                  fields: rule.responseModeration?.fields || "",
-                  responseFilterCriteria: rule.responseModeration?.responseFilterCriteria || ""
+                  fields: rule.responseModeration?.fields || null,
+                  responseFilterCriteria: rule.responseModeration?.responseFilterCriteria || null
                 }
               })) || []
             };
@@ -180,8 +179,8 @@ const PrivilegeForm = () => {
           scopes: rule.scopes || [],
           requestedMethod: rule.requestedMethod || "GET",
           responseModeration: {
-            fields: rule.responseModeration?.fields || "",
-            responseFilterCriteria: rule.responseModeration?.responseFilterCriteria || ""
+            fields: rule.responseModeration?.fields || null,
+            responseFilterCriteria: rule.responseModeration?.responseFilterCriteria || null
           }
         })),
         state: 'PENDING' // Always set to PENDING when creating/editing
@@ -218,6 +217,10 @@ const PrivilegeForm = () => {
       ...rule,
       scopes: Array.isArray(rule.scopes) ? rule.scopes : 
         (rule.scopes as unknown as string)?.split(',').filter(Boolean) || [],
+      responseModeration: {
+        fields: rule.responseModeration?.fields || null,
+        responseFilterCriteria: rule.responseModeration?.responseFilterCriteria || null
+      }
     });
     setIsEditingRule(true);
     setEditingRuleIndex(index);
@@ -240,8 +243,8 @@ const PrivilegeForm = () => {
         (tempRule.scopes as unknown as string)?.split(',').filter(Boolean) || [],
       requestedMethod: tempRule.requestedMethod as any || "GET",
       responseModeration: {
-        fields: tempRule.responseModeration?.fields || "",
-        responseFilterCriteria: tempRule.responseModeration?.responseFilterCriteria || ""
+        fields: tempRule.responseModeration?.fields || null,
+        responseFilterCriteria: tempRule.responseModeration?.responseFilterCriteria || null
       }
     };
     
@@ -265,8 +268,8 @@ const PrivilegeForm = () => {
       scopes: [],
       requestedMethod: 'GET',
       responseModeration: {
-        fields: '',
-        responseFilterCriteria: ''
+        fields: null,
+        responseFilterCriteria: null
       }
     });
     
