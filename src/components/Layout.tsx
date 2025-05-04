@@ -81,9 +81,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </nav>
         </aside>
 
-        {/* Main content */}
+        {/* Main content - removed mx-auto from the container to align content to the left */}
         <main className="flex-1 p-8 overflow-auto bg-background">
-          <div className="container mx-auto">
+          <div>
             {children}
           </div>
         </main>
