@@ -127,7 +127,7 @@ const PrivilegeForm = () => {
             // Map the API response to match our form schema
             const formattedPrivilege = {
               ...privilege,
-              privilegeRules: privilege.privilegeRules.map(rule => ({
+              privilegeRules: privilege[0]?.privilegeRules.map(rule => ({
                 ...rule,
                 _id: rule.id || rule._id || "",
                 requestedMethod: rule.requestedMethod || "GET",
