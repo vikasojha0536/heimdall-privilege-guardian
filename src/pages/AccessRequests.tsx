@@ -88,13 +88,15 @@ const AccessRequests: React.FC = () => {
   const confirmStateChange = async () => {
     if (!stateChangeConfirm) return;
     
-    const { requestId, newState } = stateChangeConfirm;
+    const { requestId, newState, calleeClientId, callerClientId } = stateChangeConfirm;
     
     try {
       setUpdateLoading(requestId);
       const updateRequest: PrivilegeUpdateRequest = {
         id: requestId,
         state: newState,
+        calleeClientId: calleeClientId,
+        callerClientId: callerClientId
       };
       
       await updatePrivilegeState(updateRequest);

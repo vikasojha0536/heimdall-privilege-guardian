@@ -33,6 +33,8 @@ export interface PrivilegeRequest {
 export interface PrivilegeUpdateRequest {
   id: string;
   state: PrivilegeState;
+  calleeClientId: string;
+  callerClientId: string;
 }
 
 export const emptyPrivilegeRule: PrivilegeRule = {
