@@ -107,19 +107,19 @@ const handleResponse = async (response: Response) => {
 
 // Get current user's ID from localStorage
 export const getCurrentUserId = (): string => {
-  return localStorage.getItem('currentUserId') || 'dot--tyrell--northbound';
+  return localStorage.getItem('currentUserId') || 'dot--tyrell--westbound';
 };
 
 // Fetch all privilege requests relevant to the user
-export const fetchPrivileges = async () => {
+export const fetchPrivileges = async (id: string, actor: string) => {
   // In development, use mock data
-  if (!environment.production) {
-    console.log("Using mock data for fetchPrivileges");
-    return Promise.resolve([...MOCK_DATA]);
-  }
+//   if (!environment.production) {
+//     console.log("Using mock data for fetchPrivileges");
+//     return Promise.resolve([...MOCK_DATA]);
+//   }
   
   // In production, use real API
-  const response = await fetch(`${API_URL}/privileges`, {
+  const response = await fetch(`${API_URL}/privileges/${id}?actor=${actor}`, {
     headers: {
       'Content-Type': 'application/json',
     },
@@ -131,11 +131,11 @@ export const fetchPrivileges = async () => {
 // Get a specific privilege request by ID
 export const getPrivilegeRequest = async (id: string): Promise<PrivilegeRequest | null> => {
   // In development, use mock data
-  if (!environment.production) {
-    console.log("Using mock data for getPrivilegeRequest", id);
-    const privilege = MOCK_DATA.find(p => p.id === id || p.calleeClientId === id);
-    return Promise.resolve(privilege || null);
-  }
+//   if (!environment.production) {
+//     console.log("Using mock data for getPrivilegeRequest", id);
+//     const privilege = MOCK_DATA.find(p => p.id === id || p.calleeClientId === id);
+//     return Promise.resolve(privilege || null);
+//   }
   
   // In production, use real API
   const response = await fetch(`${API_URL}/privileges/${id}`, {
@@ -150,24 +150,24 @@ export const getPrivilegeRequest = async (id: string): Promise<PrivilegeRequest 
 // Create a new privilege request
 export const createPrivilegeRequest = async (privilegeRequest: PrivilegeRequest) => {
   // In development, use mock data
-  if (!environment.production) {
-    console.log("Using mock data for createPrivilegeRequest", privilegeRequest);
-    // Add an ID if this is a new request
-    if (!privilegeRequest.id) {
-      privilegeRequest.id = `priv-${Math.floor(Math.random() * 1000)}`;
-    }
-    
-    // If it's an existing request, update it
-    const existingIndex = MOCK_DATA.findIndex(p => p.id === privilegeRequest.id);
-    if (existingIndex !== -1) {
-      MOCK_DATA[existingIndex] = privilegeRequest;
-    } else {
-      // Otherwise add a new one
-      MOCK_DATA.push(privilegeRequest);
-    }
-    
-    return Promise.resolve(privilegeRequest);
-  }
+//   if (!environment.production) {
+//     console.log("Using mock data for createPrivilegeRequest", privilegeRequest);
+//     // Add an ID if this is a new request
+//     if (!privilegeRequest.id) {
+//       privilegeRequest.id = `priv-${Math.floor(Math.random() * 1000)}`;
+//     }
+//
+//     // If it's an existing request, update it
+//     const existingIndex = MOCK_DATA.findIndex(p => p.id === privilegeRequest.id);
+//     if (existingIndex !== -1) {
+//       MOCK_DATA[existingIndex] = privilegeRequest;
+//     } else {
+//       // Otherwise add a new one
+//       MOCK_DATA.push(privilegeRequest);
+//     }
+//
+//     return Promise.resolve(privilegeRequest);
+//   }
   
   // In production, use real API
   const response = await fetch(`${API_URL}/privileges`, {
@@ -184,14 +184,14 @@ export const createPrivilegeRequest = async (privilegeRequest: PrivilegeRequest)
 // Update the state of a privilege request
 export const updatePrivilegeRequest = async (updateRequest: PrivilegeUpdateRequest) => {
   // In development, use mock data
-  if (!environment.production) {
-    console.log("Using mock data for updatePrivilegeRequest", updateRequest);
-    const privilege = MOCK_DATA.find(p => p.id === updateRequest.id);
-    if (privilege) {
-      privilege.state = updateRequest.state;
-    }
-    return Promise.resolve(privilege);
-  }
+//   if (!environment.production) {
+//     console.log("Using mock data for updatePrivilegeRequest", updateRequest);
+//     const privilege = MOCK_DATA.find(p => p.id === updateRequest.id);
+//     if (privilege) {
+//       privilege.state = updateRequest.state;
+//     }
+//     return Promise.resolve(privilege);
+//   }
   
   // In production, use real API
   const response = await fetch(`${API_URL}/privileges`, {

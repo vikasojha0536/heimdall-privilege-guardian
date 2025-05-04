@@ -55,7 +55,7 @@ const AccessRequests: React.FC = () => {
   const loadRequests = async () => {
     try {
       setLoading(true);
-      const data = await fetchPrivileges();
+      const data = await fetchPrivileges(currentUserId, "callee");
       // Filter for requests where the current user is the callee
       const calleeRequests = data.filter(
         (req: PrivilegeRequest) => req.calleeClientId === currentUserId

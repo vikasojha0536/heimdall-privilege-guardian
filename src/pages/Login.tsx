@@ -10,7 +10,7 @@ const Login: React.FC = () => {
   const handleLogin = () => {
     // In a real implementation, this would trigger the OAuth flow
     // For development, we'll just navigate to the dashboard
-    localStorage.setItem('currentUserId', 'dot--tyrell--northbound');
+    localStorage.setItem('currentUserId', 'dot--tyrell--westbound');
     navigate('/');
   };
 

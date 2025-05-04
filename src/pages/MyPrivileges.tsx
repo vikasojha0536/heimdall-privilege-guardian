@@ -26,7 +26,7 @@ const MyPrivileges: React.FC = () => {
   const loadPrivileges = async () => {
     try {
       setLoading(true);
-      const data = await fetchPrivileges();
+      const data = await fetchPrivileges(currentUserId, "caller");
       // Filter for privileges where the current user is the caller
       const userPrivileges = data.filter(
         (privilege: PrivilegeRequest) => privilege.callerClientId === currentUserId
@@ -93,6 +93,7 @@ const MyPrivileges: React.FC = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
+                    <TableHead>Caller</TableHead>
                     <TableHead>Callee</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Status</TableHead>
@@ -103,6 +104,7 @@ const MyPrivileges: React.FC = () => {
                   {privileges.map((privilege) => (
                     <TableRow key={privilege.id}>
                       <TableCell className="font-medium">{privilege.name}</TableCell>
+                      <TableCell>{privilege.callerClientId}</TableCell>
                       <TableCell>{privilege.calleeClientId}</TableCell>
                       <TableCell className="max-w-[300px] truncate">
                         {privilege.description}
