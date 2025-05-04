@@ -40,6 +40,13 @@ import {
 import { toast } from 'sonner';
 import PrivilegeReadOnly from '../components/PrivilegeReadOnly';
 
+import { Pencil } from "lucide-react";
+
+
+
+import { Badge } from "@/components/ui/badge";
+
+
 const AccessRequests: React.FC = () => {
   const [requests, setRequests] = useState<PrivilegeRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +77,20 @@ const AccessRequests: React.FC = () => {
   useEffect(() => {
     loadRequests();
   }, []);
+
+  const getStateBadge = (state: string) => {
+    switch (state) {
+      case 'APPROVED':
+      case 'GRANTED':
+        return <Badge className="bg-green-500">{state}</Badge>;
+      case 'REJECTED':
+        return <Badge variant="destructive">Rejected</Badge>;
+      case 'PENDING':
+      default:
+        return <Badge variant="outline" className="text-amber-500 border-amber-500">Pending</Badge>;
+    }
+  };
+
 
   const handleStateChange = async (requestId: string, newState: PrivilegeState, calleeClientId: string, callerClientId: string) => {
     // Open confirmation dialog instead of immediately changing state
@@ -153,30 +174,34 @@ const AccessRequests: React.FC = () => {
                         {request.description}
                       </TableCell>
                       <TableCell>
-                        <Select
-                          value={request.state}
-                          onValueChange={(value) => 
-                            handleStateChange(request.id!, value as PrivilegeState, request.calleeClientId, request. callerClientId)
-                          }
-                          disabled={updateLoading === request.id}
-                        >
-                          <SelectTrigger className="w-32">
-                            {updateLoading === request.id ? (
-                              <div className="flex items-center">
-                                <Loader className="h-3 w-3 animate-spin mr-2" />
-                                <SelectValue />
-                              </div>
-                            ) : (
-                              <SelectValue />
-                            )}
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value={request.state}>{request.state}</SelectItem>
-                            {request.state !== "PENDING" && <SelectItem value="PENDING">PENDING</SelectItem>}
-                            {request.state !== "REJECTED" && <SelectItem value="REJECTED">REJECTED</SelectItem>}
-                            {request.state !== "GRANTED" && <SelectItem value="GRANTED">GRANTED</SelectItem>}
-                          </SelectContent>
-                        </Select>
+                        <div className="flex items-center gap-2">
+                          {getStateBadge(request.state)}
+                          <Select
+                            onValueChange={(value) =>
+                              handleStateChange(
+                                request.id!,
+                                value as PrivilegeState,
+                                request.calleeClientId,
+                                request.callerClientId
+                              )
+                            }
+                          >
+                            <SelectTrigger className="w-8 h-8 p-0 border-none shadow-none hover:bg-muted">
+                              <Pencil className="h-4 w-4 text-muted-foreground" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {request.state !== 'PENDING' && (
+                                <SelectItem value="PENDING">PENDING</SelectItem>
+                              )}
+                              {request.state !== 'REJECTED' && (
+                                <SelectItem value="REJECTED">REJECTED</SelectItem>
+                              )}
+                              {request.state !== 'GRANTED' && (
+                                <SelectItem value="GRANTED">GRANTED</SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <Dialog>
@@ -196,6 +221,7 @@ const AccessRequests: React.FC = () => {
                     </TableRow>
                   ))}
                 </TableBody>
+
               </Table>
             </div>
           )}
