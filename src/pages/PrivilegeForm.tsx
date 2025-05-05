@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -45,7 +44,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Edit, Plus, Trash, Sun, Moon } from 'lucide-react';
 import { createPrivilegeRequest, getPrivilegeRequest, getCurrentUserId } from '../services/api';
-import { PrivilegeRequest, PrivilegeRule } from '../types/privileges';
+import { PrivilegeRequest, PrivilegeRule, emptyPrivilegeRule } from '../types/privileges';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -93,8 +92,8 @@ const PrivilegeForm = () => {
     scopes: [],
     requestedMethod: 'GET',
     responseModeration: {
-      fields: '',
-      responseFilterCriteria: ''
+      fields: null,
+      responseFilterCriteria: null
     }
   });
   const [isEditingRule, setIsEditingRule] = useState(false);
@@ -220,6 +219,10 @@ const PrivilegeForm = () => {
       ...rule,
       scopes: Array.isArray(rule.scopes) ? rule.scopes : 
         (rule.scopes as unknown as string)?.split(',').filter(Boolean) || [],
+      responseModeration: {
+        fields: rule.responseModeration?.fields || null,
+        responseFilterCriteria: rule.responseModeration?.responseFilterCriteria || null
+      }
     });
     setIsEditingRule(true);
     setEditingRuleIndex(index);
@@ -542,7 +545,6 @@ const PrivilegeForm = () => {
                                 </SelectContent>
                               </Select>
                             </div>
-                            {/* ResponseModeration fields removed as requested */}
                           </div>
                           <DialogFooter>
                             <DialogClose asChild>

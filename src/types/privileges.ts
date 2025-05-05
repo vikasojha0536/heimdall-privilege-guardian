@@ -44,8 +44,8 @@ export const emptyPrivilegeRule: PrivilegeRule = {
   scopes: [],
   requestedMethod: 'GET',
   responseModeration: {
-    fields: '',
-    responseFilterCriteria: ''
+    fields: null,
+    responseFilterCriteria: null
   }
 };
 
