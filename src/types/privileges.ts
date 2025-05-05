@@ -35,6 +35,7 @@ export interface PrivilegeUpdateRequest {
   state: PrivilegeState;
   calleeClientId: string;
   callerClientId: string;
+  responseModeration?: ResponseModeration;
 }
 
 export const emptyPrivilegeRule: PrivilegeRule = {

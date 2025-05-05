@@ -81,3 +81,7 @@
   }
 }
 
+/* Scrollable areas */
+.scrollable-content {
+  @apply overflow-y-auto max-h-[60vh];
+}

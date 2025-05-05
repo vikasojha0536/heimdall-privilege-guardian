@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
-import { PrivilegeRequest, PrivilegeState, PrivilegeUpdateRequest } from '../types/privileges';
+import { PrivilegeRequest, PrivilegeState, PrivilegeUpdateRequest, ResponseModeration } from '../types/privileges';
 import { fetchPrivileges, getCurrentUserId, updatePrivilegeState } from '../services/api';
-import { Loader, Eye, AlertTriangle } from 'lucide-react';
+import { Loader, Eye, AlertTriangle, Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -39,13 +39,13 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import PrivilegeReadOnly from '../components/PrivilegeReadOnly';
-
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Pencil } from "lucide-react";
-
-
-
+import { useTheme } from 'next-themes';
 import { Badge } from "@/components/ui/badge";
-
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const AccessRequests: React.FC = () => {
   const [requests, setRequests] = useState<PrivilegeRequest[]>([]);
@@ -54,8 +54,16 @@ const AccessRequests: React.FC = () => {
   const [stateChangeConfirm, setStateChangeConfirm] = useState<{
     requestId: string;
     newState: PrivilegeState;
+    calleeClientId: string;
+    callerClientId: string;
   } | null>(null);
+  const [responseModeration, setResponseModeration] = useState<ResponseModeration>({
+    fields: "",
+    responseFilterCriteria: ""
+  });
+  const [showResponseModeration, setShowResponseModeration] = useState(false);
   const currentUserId = getCurrentUserId();
+  const { theme, setTheme } = useTheme();
 
   const loadRequests = async () => {
     try {
@@ -91,10 +99,19 @@ const AccessRequests: React.FC = () => {
     }
   };
 
-
   const handleStateChange = async (requestId: string, newState: PrivilegeState, calleeClientId: string, callerClientId: string) => {
-    // Open confirmation dialog instead of immediately changing state
-    setStateChangeConfirm({ requestId, newState, calleeClientId, callerClientId });
+    // If we're granting or rejecting, show the response moderation dialog first
+    if (newState === 'GRANTED' || newState === 'REJECTED') {
+      setResponseModeration({
+        fields: "",
+        responseFilterCriteria: ""
+      });
+      setShowResponseModeration(true);
+      setStateChangeConfirm({ requestId, newState, calleeClientId, callerClientId });
+    } else {
+      // For other states, go directly to confirmation
+      setStateChangeConfirm({ requestId, newState, calleeClientId, callerClientId });
+    }
   };
   
   const confirmStateChange = async () => {
@@ -111,11 +128,26 @@ const AccessRequests: React.FC = () => {
         callerClientId: callerClientId
       };
       
+      // If we're granting or rejecting and have response moderation data, include it
+      if ((newState === 'GRANTED' || newState === 'REJECTED') && showResponseModeration) {
+        updateRequest.responseModeration = responseModeration;
+      }
+      
       await updatePrivilegeState(updateRequest);
       
       setRequests((prevRequests) =>
         prevRequests.map((req) =>
-          req.id === requestId ? { ...req, state: newState } : req
+          req.id === requestId ? { 
+            ...req, 
+            state: newState,
+            // Update response moderation if provided
+            privilegeRules: req.privilegeRules.map(rule => ({
+              ...rule,
+              responseModeration: (newState === 'GRANTED' || newState === 'REJECTED') && showResponseModeration
+                ? responseModeration 
+                : rule.responseModeration
+            }))
+          } : req
         )
       );
       
@@ -126,16 +158,26 @@ const AccessRequests: React.FC = () => {
     } finally {
       setUpdateLoading(null);
       setStateChangeConfirm(null);
+      setShowResponseModeration(false);
     }
+  };
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Access Requests</h1>
-        <p className="text-muted-foreground">
-          Review and manage privilege requests from other systems
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Access Requests</h1>
+          <p className="text-muted-foreground">
+            Review and manage privilege requests from other systems
+          </p>
+        </div>
+        <Button variant="outline" size="icon" onClick={toggleTheme}>
+          {theme === 'dark' ? <Sun className="h-[1.2rem] w-[1.2rem]" /> : <Moon className="h-[1.2rem] w-[1.2rem]" />}
+        </Button>
       </div>
 
       <Card>
@@ -214,23 +256,77 @@ const AccessRequests: React.FC = () => {
                             <DialogHeader>
                               <DialogTitle>{request.name}</DialogTitle>
                             </DialogHeader>
-                            <PrivilegeReadOnly privilege={request} />
+                            <ScrollArea className="h-[60vh]">
+                              <PrivilegeReadOnly privilege={request} />
+                            </ScrollArea>
                           </DialogContent>
                         </Dialog>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
-
               </Table>
             </div>
           )}
         </CardContent>
       </Card>
       
+      {/* Response Moderation Dialog */}
+      <Dialog 
+        open={showResponseModeration} 
+        onOpenChange={(open) => !open && setShowResponseModeration(false)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Response Moderation</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="fields">Response Fields</Label>
+              <Input
+                id="fields"
+                placeholder="Response Fields"
+                value={responseModeration.fields}
+                onChange={(e) => setResponseModeration({
+                  ...responseModeration,
+                  fields: e.target.value
+                })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="responseFilterCriteria">Response Filter Criteria</Label>
+              <Textarea
+                id="responseFilterCriteria"
+                placeholder="Response Filter Criteria"
+                value={responseModeration.responseFilterCriteria}
+                onChange={(e) => setResponseModeration({
+                  ...responseModeration,
+                  responseFilterCriteria: e.target.value
+                })}
+                rows={3}
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setShowResponseModeration(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => {
+                setShowResponseModeration(false);
+                // Now show the confirmation dialog
+                if (stateChangeConfirm) {
+                  // The state change confirm is already set, we just need to proceed
+                }
+              }}>
+                Continue
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
       {/* Confirmation Dialog */}
       <AlertDialog 
-        open={!!stateChangeConfirm} 
+        open={!!stateChangeConfirm && !showResponseModeration} 
         onOpenChange={(open) => !open && setStateChangeConfirm(null)}
       >
         <AlertDialogContent>

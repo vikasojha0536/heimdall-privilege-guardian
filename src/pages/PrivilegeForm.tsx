@@ -43,12 +43,13 @@ import {
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Edit, Plus, Trash } from 'lucide-react';
+import { Edit, Plus, Trash, Sun, Moon } from 'lucide-react';
 import { createPrivilegeRequest, getPrivilegeRequest, getCurrentUserId } from '../services/api';
 import { PrivilegeRequest, PrivilegeRule } from '../types/privileges';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { useTheme } from 'next-themes';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -103,6 +104,7 @@ const PrivilegeForm = () => {
   const { id } = useParams<{ id: string }>();
   const [initialValues, setInitialValues] = useState<PrivilegeRequest | null>(null);
   const currentUserId = getCurrentUserId();
+  const { theme, setTheme } = useTheme();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -180,8 +182,8 @@ const PrivilegeForm = () => {
           scopes: rule.scopes || [],
           requestedMethod: rule.requestedMethod || "GET",
           responseModeration: {
-            fields: rule.responseModeration?.fields || "",
-            responseFilterCriteria: rule.responseModeration?.responseFilterCriteria || ""
+            fields: "",
+            responseFilterCriteria: ""
           }
         })),
         state: 'PENDING' // Always set to PENDING when creating/editing
@@ -240,8 +242,8 @@ const PrivilegeForm = () => {
         (tempRule.scopes as unknown as string)?.split(',').filter(Boolean) || [],
       requestedMethod: tempRule.requestedMethod as any || "GET",
       responseModeration: {
-        fields: tempRule.responseModeration?.fields || "",
-        responseFilterCriteria: tempRule.responseModeration?.responseFilterCriteria || ""
+        fields: "",
+        responseFilterCriteria: ""
       }
     };
     
@@ -294,15 +296,24 @@ const PrivilegeForm = () => {
     navigate('/privileges');
   };
 
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{id ? "Edit Privilege" : "Create Privilege"}</CardTitle>
-        <CardDescription>
-          {id
-            ? "Edit the privilege details below."
-            : "Create a new privilege by entering the details below."}
-        </CardDescription>
+      <CardHeader className="flex justify-between items-start">
+        <div>
+          <CardTitle>{id ? "Edit Privilege" : "Create Privilege"}</CardTitle>
+          <CardDescription>
+            {id
+              ? "Edit the privilege details below."
+              : "Create a new privilege by entering the details below."}
+          </CardDescription>
+        </div>
+        <Button variant="outline" size="icon" onClick={toggleTheme}>
+          {theme === 'dark' ? <Sun className="h-[1.2rem] w-[1.2rem]" /> : <Moon className="h-[1.2rem] w-[1.2rem]" />}
+        </Button>
       </CardHeader>
       <CardContent className="space-y-4">
         <Form {...form}>
@@ -531,36 +542,7 @@ const PrivilegeForm = () => {
                                 </SelectContent>
                               </Select>
                             </div>
-                            <div className="grid grid-cols-1 gap-2">
-                              <Label htmlFor="fields">Response Fields</Label>
-                              <Input 
-                                id="fields" 
-                                placeholder="Response Fields" 
-                                value={tempRule.responseModeration?.fields || ''}
-                                onChange={(e) => setTempRule({
-                                  ...tempRule,
-                                  responseModeration: {
-                                    ...tempRule.responseModeration!,
-                                    fields: e.target.value
-                                  }
-                                })}
-                              />
-                            </div>
-                            <div className="grid grid-cols-1 gap-2">
-                              <Label htmlFor="responseFilterCriteria">Response Filter Criteria</Label>
-                              <Input 
-                                id="responseFilterCriteria" 
-                                placeholder="Response Filter Criteria" 
-                                value={tempRule.responseModeration?.responseFilterCriteria || ''}
-                                onChange={(e) => setTempRule({
-                                  ...tempRule,
-                                  responseModeration: {
-                                    ...tempRule.responseModeration!,
-                                    responseFilterCriteria: e.target.value
-                                  }
-                                })}
-                              />
-                            </div>
+                            {/* ResponseModeration fields removed as requested */}
                           </div>
                           <DialogFooter>
                             <DialogClose asChild>
