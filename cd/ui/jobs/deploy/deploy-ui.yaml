@@ -1,0 +1,56 @@
+release-dev-ui:
+  image: mtr.devops.telekom.de/oneapp/worker:2.2
+  stage: deploy
+  needs: [ build-image-dev ]
+  variables:
+    HELM_NAMESPACE: '${CI_PROJECT_NAME}-dev'
+    HELM_ADDITIONAL_ARGS: ${CHART_PATH}/value-dev.yaml
+    INGRESS_HOST: "orchest.oneapp.dev.hal.telekom.de"
+    KUBECONFIG: ${GITLAB_OIDC_IAM_KUBECONFIG_ONEAPP_HAL_DEV}
+    AWS_ASSUMED_ROLE_ARN: ${DEV_IAM_ROLE_ARN}
+  environment:
+    name: dev
+  extends:
+    - .deploy_chart
+  tags: []
+
+
+release-teststable-ui:
+  image: mtr.devops.telekom.de/oneapp/worker:2.2
+  stage: deploy
+  needs: [build-image-teststable, sign-image-teststable]
+  variables:
+    HELM_NAMESPACE: '${CI_PROJECT_NAME}-teststable'
+    HELM_ADDITIONAL_ARGS: ${CHART_PATH}/value-teststable.yaml
+    INGRESS_HOST: "orchest.oneapp.teststable.hal.telekom.de"
+    KUBECONFIG: ${GITLAB_OIDC_IAM_KUBECONFIG_ONEAPP_HAL_TESTSTABLE}
+    AWS_ASSUMED_ROLE_ARN: ${TESTABLE_IAM_ROLE_ARN}
+  environment:
+    name: teststable
+  extends:
+    - .deploy_chart
+  tags:
+    - teststable
+  when: manual
+  only:
+    - main
+
+release-uat-ui:
+  image: mtr.devops.telekom.de/oneapp/worker:2.2
+  stage: deploy
+  needs: [build-image-uat, sign-image-uat]
+  variables:
+    HELM_NAMESPACE: '${CI_PROJECT_NAME}-uat'
+    HELM_ADDITIONAL_ARGS: ${CHART_PATH}/values-uat.yaml
+    INGRESS_HOST: "orchest.oneapp.uat.hal.telekom.de"
+    KUBECONFIG: ${GITLAB_OIDC_IAM_KUBECONFIG_ONEAPP_HAL_UAT}
+    AWS_ASSUMED_ROLE_ARN: ${UAT_IAM_ROLE_ARN}
+  environment:
+    name: uat
+  extends:
+    - .deploy_chart
+  tags:
+    - uat
+  when: manual
+  only:
+    - main

@@ -353,13 +353,6 @@ const PrivilegeForm = () => {
               : "Create a new privilege by entering the details below."}
           </CardDescription>
         </div>
-        <Button variant="outline" size="icon" onClick={toggleTheme}>
-          {theme === "dark" ? (
-            <Sun className="h-[1.2rem] w-[1.2rem]" />
-          ) : (
-            <Moon className="h-[1.2rem] w-[1.2rem]" />
-          )}
-        </Button>
       </CardHeader>
       <CardContent className="space-y-4">
         <Form {...form}>
@@ -613,7 +606,8 @@ const PrivilegeForm = () => {
                                       | "DELETE"
                                       | "PATCH"
                                       | "OPTIONS"
-                                      | "HEAD",
+                                      | "HEAD"
+                                      | "ALL",
                                   })
                                 }
                                 value={tempRule.requestedMethod}
@@ -628,6 +622,7 @@ const PrivilegeForm = () => {
                                   <SelectItem value="PUT">PUT</SelectItem>
                                   <SelectItem value="DELETE">DELETE</SelectItem>
                                   <SelectItem value="PATCH">PATCH</SelectItem>
+                                  <SelectItem value="ALL">ALL</SelectItem>
                                   <SelectItem value="OPTIONS">
                                     OPTIONS
                                   </SelectItem>

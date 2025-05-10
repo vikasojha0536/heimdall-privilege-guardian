@@ -1,0 +1,6 @@
+helm-lint:
+  stage: test
+  needs: []
+  extends:
+    - .helm_lint_template
+    - .runner

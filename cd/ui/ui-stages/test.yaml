@@ -1,0 +1,3 @@
+include:
+  - local: 'cd/ui/jobs/test/helm-lint.yaml'
+  - local: 'cd/ui/jobs/test/sast.yaml'

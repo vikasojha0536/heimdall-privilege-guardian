@@ -1,0 +1,5 @@
+.sign-image-ui:
+  stage: publish
+  extends:
+    - .sign_image_otc
+  allow_failure: true

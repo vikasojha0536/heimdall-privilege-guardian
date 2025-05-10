@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/enable-gzip: "false"
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    {{ if .Values.canary.enabled }}
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-by-header: "X-canary"
+    {{ end }}
+  name: {{ .Values.application.name }}
+  labels:
+    app: {{ .Values.application.name }}
+    dot.de/service: {{ .Chart.Name }}
+    dot.de/team: {{ .Values.team.name }}
+spec:
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.application.name }}
+                port:
+                  number: {{ .Values.service.port }}

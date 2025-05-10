@@ -1,0 +1,48 @@
+build-image-dev:
+  needs: [version, helm-lint,build-ui-dev]
+  before_script:
+    - DOCKER_BUILD_ARGS="$DOCKER_BUILD_ARGS --label quay.expires-after='12w'"
+    - echo $DOCKER_BUILD_ARGS
+    - IMAGE_VERSION=$IMAGE_VERSION-dev
+    - echo "IMAGE_VERSION=$IMAGE_VERSION" >> version.env
+    - cat version.env
+  extends:
+    - .build-image-ui
+  artifacts:
+    reports:
+      dotenv: version.env
+  only:
+    - main
+
+
+build-image-teststable:
+  needs: [version, helm-lint,build-ui-teststable]
+  before_script:
+    - DOCKER_BUILD_ARGS="$DOCKER_BUILD_ARGS --label quay.expires-after='12w'"
+    - echo $DOCKER_BUILD_ARGS
+    - IMAGE_VERSION=$IMAGE_VERSION-dev
+    - echo "IMAGE_VERSION=$IMAGE_VERSION" >> version.env
+    - cat version.env
+  extends:
+    - .build-image-ui
+  artifacts:
+    reports:
+      dotenv: version.env
+  only:
+    - main
+
+build-image-uat:
+  needs: [version, helm-lint, build-ui-uat]
+  before_script:
+    - DOCKER_BUILD_ARGS="$DOCKER_BUILD_ARGS --label quay.expires-after='12w'"
+    - echo $DOCKER_BUILD_ARGS
+    - IMAGE_VERSION=$IMAGE_VERSION-dev
+    - echo "IMAGE_VERSION=$IMAGE_VERSION" >> version.env
+    - cat version.env
+  extends:
+    - .build-image-ui
+  artifacts:
+    reports:
+      dotenv: version.env
+  only:
+    - main

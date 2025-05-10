@@ -1,0 +1,17 @@
+.announcement:
+  stage: announcement
+  variables:
+    ENVIRONMENT_NAME: "undefined"
+  script:
+    - !reference [.notification, script]
+    - MESSAGE=$(notification_msg)
+    - notification_webex "$MESSAGE" "$WEBEX_WEBHOOK"
+
+announcement-prod:
+  needs: [version, sign-image-ui-prod]
+  extends: .announcement
+  variables:
+    ENVIRONMENT_NAME: "prod"
+  when: manual
+  only:
+    - tags

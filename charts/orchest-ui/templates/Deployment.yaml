@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.application.name }}
+  annotations:
+{{ toYaml .Values.info.annotations | indent 4 }}
+  labels:
+    app: {{ .Values.application.name }}
+    version: {{ .Values.image.tag }}
+    dot.de/service: {{ .Chart.Name }}
+    dot.de/team: {{ .Values.team.name }}
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  selector:
+    matchLabels:
+      app: {{ .Values.application.name }}
+  template:
+    metadata:
+      annotations:
+        dot.de/notificationUrl: "webexteams://im?space=5ab17390-6b09-11ed-8e68-a11cb0d3a1dc"
+      labels:
+        app: {{ .Values.application.name }}
+        version: {{ .Values.image.tag }}
+        dot.de/service: {{ .Chart.Name }}
+        dot.de/team: {{ .Values.team.name }}
+    spec:
+      imagePullSecrets:
+        - name: {{ .Values.aws.externalSecret.imagePull }}
+      containers:
+        - name: {{ .Values.application.name }}
+          image: {{ .Values.image.name }}:{{ .Values.image.tag }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            failureThreshold: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            failureThreshold: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: {{ .Values.environment.resources.requests.memory }}
+              cpu: {{ .Values.environment.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.environment.resources.limits.memory }}
+              cpu: {{ .Values.environment.resources.limits.cpu }}
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+            - name: var
+              mountPath: /var/log/nginx
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+      volumes:
+        - name: tmp-volume
+          emptyDir: { }
+        - name: var
+          emptyDir: { }

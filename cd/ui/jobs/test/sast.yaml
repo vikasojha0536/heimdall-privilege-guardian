@@ -1,0 +1,4 @@
+# DOTSE-177 task semgrep-sast fails every time in semgrep-sast
+sast:
+  tags:
+  - otc_run_sysbox_m

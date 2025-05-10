@@ -1,0 +1,10 @@
+install-packages:
+  stage: build
+  needs: [version]
+  script:
+    - npm install
+  cache:
+    policy: pull-push
+  extends:
+    - .node_image
+    - .cache

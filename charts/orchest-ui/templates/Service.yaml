@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.application.name }}
+  labels:
+    app: {{ .Values.application.name }}
+    dot.de/service: {{ .Chart.Name }}
+    dot.de/team: {{ .Values.team.name }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.application.port }}
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ .Values.application.name }}

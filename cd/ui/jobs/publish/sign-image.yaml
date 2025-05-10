@@ -1,0 +1,25 @@
+sign-image-dev:
+  needs: [build-image-dev]
+  extends:
+    - .sign-image-ui
+  allow_failure: true
+  only:
+    - main
+
+sign-image-teststable:
+  needs: [build-image-teststable]
+  extends:
+    - .sign-image-ui
+
+  allow_failure: true
+  only:
+    - main
+
+sign-image-uat:
+  needs: [build-image-uat]
+  extends:
+    - .sign-image-ui
+
+  allow_failure: true
+  only:
+    - main

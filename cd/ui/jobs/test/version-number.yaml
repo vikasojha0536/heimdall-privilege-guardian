@@ -1,0 +1,13 @@
+version-number:
+  only:
+    - main
+    - release
+  needs: [version, publish-changelog]
+  stage: test
+  script:
+    - export CHANGELOG_VERSION=$(grep '^##' CHANGELOG.md|  egrep -o '[0-9]+\.[0-9]+\.[0-9]' | head -1)
+    - echo "$CHANGELOG_VERSION == $SERVICE_VERSION ?"
+    - if [ -n "$CHANGELOG_VERSION" -a "$SERVICE_VERSION" != "$CHANGELOG_VERSION" ]; then echo "Different version number in CHANGELOG ($CHANGELOG_VERSION) and PIPELINE ($SERVICE_VERSION)!"; false; fi;
+  allow_failure: true
+  extends:
+    - .runner

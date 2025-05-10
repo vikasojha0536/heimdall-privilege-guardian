@@ -1,0 +1,2 @@
+include:
+  - local: 'cd/ui/jobs/announcement/announcement-deploy-ui.yaml'

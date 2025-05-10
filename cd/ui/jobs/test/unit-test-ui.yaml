@@ -1,0 +1,14 @@
+unit-test-ui:
+  stage: test
+  script:
+    - npx vitest --coverage --reporter=junit --outputFile test/test-report.xml --run
+  artifacts:
+    when: always
+    reports:
+      junit: test/test-report.xml
+    paths:
+      - test/test-report.xml
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+  extends:
+    - .node_image
+    - .cache

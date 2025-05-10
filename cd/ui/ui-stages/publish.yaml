@@ -1,0 +1,5 @@
+include:
+  - local: 'cd/ui/jobs/publish/build-image-ui.yaml'
+  - local: 'cd/ui/jobs/publish/sign-image-ui.yaml'
+  - local: 'cd/ui/jobs/publish/build-image.yaml'
+  - local: 'cd/ui/jobs/publish/sign-image.yaml'

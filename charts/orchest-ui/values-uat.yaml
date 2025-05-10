@@ -1,0 +1,4 @@
+environment:
+  name: uat  
+ingress:
+  host: orchest.oneapp.uat.hal.telekom.de

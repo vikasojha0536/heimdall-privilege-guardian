@@ -1,0 +1,49 @@
+application:
+  name: orchest-ui
+  port: 8080
+
+service:
+  type: ClusterIP
+  port: 8080
+  roleARN: arn:aws:iam::274765082782:role/orchest-dev
+
+aws:
+  externalSecret:
+    imagePull: oneapp-pull-secret-v2
+
+canary:
+  enabled: false
+  suffix: ""
+
+environment:
+  maxSurge: 25%
+  maxUnavailable: 0
+  name: dev
+  namespace: orchest-ui
+  replicas:
+    quantity: 1
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+image:
+  name: mtr.devops.telekom.de/oneapp/orchest-ui
+  tag: latest
+
+ingress:
+  host: orchest.oneapp.dev.hal.telekom.de
+
+team:
+  name: "tyrell"
+
+info:
+  annotations:
+    dot.de/notificationUrl: "webexteams://im?space=5ab17390-6b09-11ed-8e68-a11cb0d3a1dc"
+  labels:
+    dot.de/team: "tyrell"
+    dot.de/service: "orchest-ui"
+

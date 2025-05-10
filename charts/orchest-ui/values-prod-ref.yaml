@@ -1,0 +1,6 @@
+environment:
+  name: prod-ref  
+
+ingress:
+  host: orchest.oneapp.prod-ref.hal.telekom.de
+

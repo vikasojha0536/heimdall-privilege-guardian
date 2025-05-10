@@ -1,0 +1,87 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 217 33% 17%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 217 33% 17%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 217 33% 17%;
+
+    /* Deutsche Telekom Magenta Primary */
+    --primary: 330 100% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 330 30% 95%;
+    --secondary-foreground: 330 100% 45%;
+
+    --muted: 330 10% 96%;
+    --muted-foreground: 330 8% 46%;
+
+    /* Deutsche Telekom Accent Colors */
+    --accent: 330 100% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 330 20% 87%;
+    --input: 330 20% 87%;
+    --ring: 330 100% 45%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 217 33% 17%;
+    --foreground: 210 40% 98%;
+
+    --card: 217 33% 17%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 217 33% 17%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Deutsche Telekom Magenta Primary - Dark mode */
+    --primary: 330 100% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 330 30% 25%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 330 20% 25%;
+    --muted-foreground: 330 10% 70%;
+
+    /* Deutsche Telekom Accent Colors - Dark mode */
+    --accent: 330 100% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 330 20% 30%;
+    --input: 330 20% 30%;
+    --ring: 330 100% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Scrollable areas */
+.scrollable-content {
+  @apply overflow-y-auto max-h-[60vh];
+}

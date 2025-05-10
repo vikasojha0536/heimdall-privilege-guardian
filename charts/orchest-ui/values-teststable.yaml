@@ -1,0 +1,8 @@
+environment:
+  name: teststable  
+
+ingress:
+  host: orchest.oneapp.teststable.hal.telekom.de
+
+service:
+  roleARN: arn:aws:iam::274765082782:role/orchest-teststable

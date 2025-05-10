@@ -1,0 +1,52 @@
+build-ui-dev:
+  script:
+    - npm run build:dev
+    - if [ -d "build" ]; then rm -rf build; fi
+    - mkdir build
+    - mv dist/* build/
+  extends:
+    - .build-ui-raw
+  only:
+    - main
+
+build-ui-teststable:
+  script:
+    - npm run build:teststable
+    - if [ -d "build" ]; then rm -rf build; fi
+    - mkdir build
+    - mv dist/* build/
+  stage: build
+  needs: [install-packages, version]
+  artifacts:
+    paths:
+      - build
+    expire_in: 30 mins
+  extends:
+    - .node_image
+    - .cache
+    - .runner
+  environment:
+    name: teststable
+  only:
+    - main
+
+build-ui-uat:
+  script:
+    - npm run build:uat
+    - if [ -d "build" ]; then rm -rf build; fi
+    - mkdir build
+    - mv dist/* build/
+  stage: build
+  needs: [install-packages, version]
+  artifacts:
+    paths:
+      - build
+    expire_in: 30 mins
+  extends:
+    - .node_image
+    - .cache
+    - .runner
+  environment:
+    name: uat
+  only:
+    - main

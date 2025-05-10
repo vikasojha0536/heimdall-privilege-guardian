@@ -1,0 +1,4 @@
+include:
+  - local: 'cd/ui/jobs/build-step/install-packages.yaml'
+  - local: 'cd/ui/jobs/build-step/build-ui.yaml'
+  - local: 'cd/ui/jobs/build-step/build-ui-raw.yaml'

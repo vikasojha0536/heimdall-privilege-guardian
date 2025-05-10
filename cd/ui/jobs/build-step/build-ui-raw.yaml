@@ -1,0 +1,13 @@
+.build-ui-raw:
+  stage: build
+  needs: [install-packages, version]
+  artifacts:
+    paths:
+      - build
+    expire_in: 30 mins
+  extends:
+    - .node_image
+    - .cache
+    - .runner
+  environment:
+    name: dev

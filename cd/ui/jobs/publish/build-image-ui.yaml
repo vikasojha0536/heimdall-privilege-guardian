@@ -1,0 +1,11 @@
+.build-image-ui:
+  stage: publish
+  image: mtr.devops.telekom.de/oneapp/docker:24.0.6-dind
+  services:
+    - name: "mtr.devops.telekom.de/oneapp/docker:24.0.6-dind"
+      command: [ '--tls=false', '--host=tcp://0.0.0.0:2375', '--registry-mirror=https://dockerhub.devops.telekom.de' ]
+      alias: docker
+  extends:
+    - .build_publish_image
+  tags:
+    - otc_run_sysbox_m
