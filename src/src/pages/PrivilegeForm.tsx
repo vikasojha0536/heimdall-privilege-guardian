@@ -98,6 +98,7 @@ const formSchema = z.object({
             "PATCH",
             "OPTIONS",
             "HEAD",
+            "ALL",
             "",
           ])
           .default("GET"),
@@ -625,7 +626,8 @@ const PrivilegeForm = () => {
                                       | "DELETE"
                                       | "PATCH"
                                       | "OPTIONS"
-                                      | "HEAD",
+                                      | "HEAD"
+                                      | "ALL",
                                   })
                                 }
                                 value={tempRule.requestedMethod}
@@ -644,6 +646,7 @@ const PrivilegeForm = () => {
                                     OPTIONS
                                   </SelectItem>
                                   <SelectItem value="HEAD">HEAD</SelectItem>
+                                  <SelectItem value="ALL">ALL</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
