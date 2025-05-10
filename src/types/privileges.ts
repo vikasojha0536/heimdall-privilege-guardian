@@ -1,3 +1,4 @@
+
 export interface ResponseModeration {
   fields: string | null;
   responseFilterCriteria: string | null;
@@ -18,8 +19,11 @@ export interface PrivilegeRule {
     | "PATCH"
     | "OPTIONS"
     | "HEAD"
+    | "ALL"
     | "";
   responseModeration: ResponseModeration;
+  skipUserTokenValidation?: boolean;
+  skipUserTokenExpiryValidation?: boolean;
 }
 
 export type PrivilegeState =
@@ -49,6 +53,7 @@ export interface PrivilegeUpdateRequest {
   calleeClientId: string;
   callerClientId: string;
   responseModeration?: ResponseModeration;
+  privilegeRules: PrivilegeRule[];
 }
 
 export const emptyPrivilegeRule: PrivilegeRule = {
@@ -60,6 +65,8 @@ export const emptyPrivilegeRule: PrivilegeRule = {
     fields: null,
     responseFilterCriteria: null,
   },
+  skipUserTokenValidation: false,
+  skipUserTokenExpiryValidation: false,
 };
 
 export const emptyPrivilegeRequest: PrivilegeRequest = {

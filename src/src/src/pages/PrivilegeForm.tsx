@@ -98,6 +98,7 @@ const formSchema = z.object({
             "PATCH",
             "OPTIONS",
             "HEAD",
+            "ALL",
             "",
           ])
           .default("GET"),
@@ -107,6 +108,8 @@ const formSchema = z.object({
             responseFilterCriteria: z.string().nullable().optional(),
           })
           .optional(),
+        skipUserTokenValidation: z.boolean().default(false),
+        skipUserTokenExpiryValidation: z.boolean().default(false),
       })
     )
     .default([]),
@@ -124,6 +127,8 @@ const PrivilegeForm = () => {
       fields: null,
       responseFilterCriteria: null,
     },
+    skipUserTokenValidation: false,
+    skipUserTokenExpiryValidation: false,
   });
   const [isEditingRule, setIsEditingRule] = useState(false);
   const [editingRuleIndex, setEditingRuleIndex] = useState<number | null>(null);
@@ -260,6 +265,8 @@ const PrivilegeForm = () => {
         responseFilterCriteria:
           rule.responseModeration?.responseFilterCriteria || null,
       },
+      skipUserTokenValidation: rule.skipUserTokenValidation || false,
+      skipUserTokenExpiryValidation: rule.skipUserTokenExpiryValidation || false,
     });
     setIsEditingRule(true);
     setEditingRuleIndex(index);
@@ -312,6 +319,8 @@ const PrivilegeForm = () => {
         fields: "",
         responseFilterCriteria: "",
       },
+      skipUserTokenValidation: false,
+      skipUserTokenExpiryValidation: false,
     });
 
     setIsDialogOpen(false);
@@ -622,11 +631,11 @@ const PrivilegeForm = () => {
                                   <SelectItem value="PUT">PUT</SelectItem>
                                   <SelectItem value="DELETE">DELETE</SelectItem>
                                   <SelectItem value="PATCH">PATCH</SelectItem>
-                                  <SelectItem value="ALL">ALL</SelectItem>
                                   <SelectItem value="OPTIONS">
                                     OPTIONS
                                   </SelectItem>
                                   <SelectItem value="HEAD">HEAD</SelectItem>
+                                  <SelectItem value="ALL">ALL</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>

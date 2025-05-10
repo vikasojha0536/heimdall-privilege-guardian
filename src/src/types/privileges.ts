@@ -19,6 +19,7 @@ export interface PrivilegeRule {
     | "PATCH"
     | "OPTIONS"
     | "HEAD"
+    | "ALL"
     | "";
   responseModeration: ResponseModeration;
   skipUserTokenValidation?: boolean;

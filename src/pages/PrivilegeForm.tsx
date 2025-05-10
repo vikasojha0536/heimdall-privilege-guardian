@@ -98,6 +98,7 @@ const formSchema = z.object({
             "PATCH",
             "OPTIONS",
             "HEAD",
+            "ALL",
             "",
           ])
           .default("GET"),
@@ -107,6 +108,8 @@ const formSchema = z.object({
             responseFilterCriteria: z.string().nullable().optional(),
           })
           .optional(),
+        skipUserTokenValidation: z.boolean().default(false),
+        skipUserTokenExpiryValidation: z.boolean().default(false),
       })
     )
     .default([]),
@@ -124,6 +127,8 @@ const PrivilegeForm = () => {
       fields: null,
       responseFilterCriteria: null,
     },
+    skipUserTokenValidation: false,
+    skipUserTokenExpiryValidation: false,
   });
   const [isEditingRule, setIsEditingRule] = useState(false);
   const [editingRuleIndex, setEditingRuleIndex] = useState<number | null>(null);
@@ -214,9 +219,11 @@ const PrivilegeForm = () => {
           scopes: rule.scopes || [],
           requestedMethod: rule.requestedMethod || "GET",
           responseModeration: {
-            fields: "",
-            responseFilterCriteria: "",
+            fields: null,
+            responseFilterCriteria: null,
           },
+          skipUserTokenValidation: rule.skipUserTokenValidation || false,
+          skipUserTokenExpiryValidation: rule.skipUserTokenExpiryValidation || false,
         })),
         state: "PENDING", // Always set to PENDING when creating/editing
       };
@@ -260,6 +267,8 @@ const PrivilegeForm = () => {
         responseFilterCriteria:
           rule.responseModeration?.responseFilterCriteria || null,
       },
+      skipUserTokenValidation: rule.skipUserTokenValidation || false,
+      skipUserTokenExpiryValidation: rule.skipUserTokenExpiryValidation || false,
     });
     setIsEditingRule(true);
     setEditingRuleIndex(index);
@@ -284,9 +293,11 @@ const PrivilegeForm = () => {
           [],
       requestedMethod: (tempRule.requestedMethod as any) || "GET",
       responseModeration: {
-        fields: "",
-        responseFilterCriteria: "",
+        fields: null,
+        responseFilterCriteria: null,
       },
+      skipUserTokenValidation: tempRule.skipUserTokenValidation || false,
+      skipUserTokenExpiryValidation: tempRule.skipUserTokenExpiryValidation || false,
     };
 
     const currentRules = form.getValues("privilegeRules") || [];
@@ -309,9 +320,11 @@ const PrivilegeForm = () => {
       scopes: [],
       requestedMethod: "GET",
       responseModeration: {
-        fields: "",
-        responseFilterCriteria: "",
+        fields: null,
+        responseFilterCriteria: null,
       },
+      skipUserTokenValidation: false,
+      skipUserTokenExpiryValidation: false,
     });
 
     setIsDialogOpen(false);
@@ -613,7 +626,8 @@ const PrivilegeForm = () => {
                                       | "DELETE"
                                       | "PATCH"
                                       | "OPTIONS"
-                                      | "HEAD",
+                                      | "HEAD"
+                                      | "ALL",
                                   })
                                 }
                                 value={tempRule.requestedMethod}
@@ -632,9 +646,53 @@ const PrivilegeForm = () => {
                                     OPTIONS
                                   </SelectItem>
                                   <SelectItem value="HEAD">HEAD</SelectItem>
+                                  <SelectItem value="ALL">ALL</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
+                            
+                            <div className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                              <Checkbox
+                                id="skipUserTokenValidation"
+                                checked={tempRule.skipUserTokenValidation}
+                                onCheckedChange={(checked) =>
+                                  setTempRule({
+                                    ...tempRule,
+                                    skipUserTokenValidation: checked as boolean,
+                                  })
+                                }
+                              />
+                              <div className="space-y-0.5">
+                                <Label htmlFor="skipUserTokenValidation">
+                                  Skip User Token Validation
+                                </Label>
+                                <p className="text-sm text-muted-foreground">
+                                  Check if you want to skip user token validation for this rule.
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                              <Checkbox
+                                id="skipUserTokenExpiryValidation"
+                                checked={tempRule.skipUserTokenExpiryValidation}
+                                onCheckedChange={(checked) =>
+                                  setTempRule({
+                                    ...tempRule,
+                                    skipUserTokenExpiryValidation: checked as boolean,
+                                  })
+                                }
+                              />
+                              <div className="space-y-0.5">
+                                <Label htmlFor="skipUserTokenExpiryValidation">
+                                  Skip User Token Expiry Validation
+                                </Label>
+                                <p className="text-sm text-muted-foreground">
+                                  Check if you want to skip user token expiry validation for this rule.
+                                </p>
+                              </div>
+                            </div>
+
                             {isEditingRule && (
                               <>
                                 <div className="grid grid-cols-1 gap-2">
