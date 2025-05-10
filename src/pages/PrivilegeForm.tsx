@@ -63,6 +63,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useTheme } from "next-themes";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -534,7 +535,7 @@ const PrivilegeForm = () => {
                             Add Rule
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
+                        <DialogContent className="sm:max-w-[425px] max-h-[80vh]">
                           <DialogHeader>
                             <DialogTitle>
                               {isEditingRule
@@ -547,182 +548,184 @@ const PrivilegeForm = () => {
                                 : "Add a new privilege rule to the privilege."}
                             </DialogDescription>
                           </DialogHeader>
-                          <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-1 gap-2">
-                              <Label htmlFor="priority">Priority</Label>
-                              <Input
-                                id="priority"
-                                type="number"
-                                placeholder="Priority"
-                                value={tempRule.priority || 0}
-                                onChange={(e) =>
-                                  setTempRule({
-                                    ...tempRule,
-                                    priority: parseInt(e.target.value),
-                                  })
-                                }
-                              />
-                            </div>
-                            <div className="grid grid-cols-1 gap-2">
-                              <Label htmlFor="description">Description</Label>
-                              <Input
-                                id="description"
-                                placeholder="Description (optional)"
-                                value={tempRule.description || ""}
-                                onChange={(e) =>
-                                  setTempRule({
-                                    ...tempRule,
-                                    description: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            <div className="grid grid-cols-1 gap-2">
-                              <Label htmlFor="requestedURL">
-                                Requested URL
-                              </Label>
-                              <Input
-                                id="requestedURL"
-                                placeholder="Requested URL"
-                                value={tempRule.requestedURL || ""}
-                                onChange={(e) =>
-                                  setTempRule({
-                                    ...tempRule,
-                                    requestedURL: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            <div className="grid grid-cols-1 gap-2">
-                              <Label htmlFor="scopes">Scopes</Label>
-                              <Input
-                                id="scopes"
-                                placeholder="Scopes (comma separated)"
-                                value={
-                                  Array.isArray(tempRule.scopes)
-                                    ? tempRule.scopes.join(",")
-                                    : tempRule.scopes || ""
-                                }
-                                onChange={(e) =>
-                                  setTempRule({
-                                    ...tempRule,
-                                    scopes: e.target.value.split(","),
-                                  })
-                                }
-                              />
-                            </div>
-                            <div className="grid grid-cols-1 gap-2">
-                              <Label htmlFor="requestedMethod">
-                                Requested Method
-                              </Label>
-                              <Select
-                                onValueChange={(value) =>
-                                  setTempRule({
-                                    ...tempRule,
-                                    requestedMethod: value as
-                                      | "GET"
-                                      | "POST"
-                                      | "PUT"
-                                      | "DELETE"
-                                      | "PATCH"
-                                      | "OPTIONS"
-                                      | "HEAD"
-                                      | "ALL",
-                                  })
-                                }
-                                value={tempRule.requestedMethod}
-                                defaultValue="GET"
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select a method" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="GET">GET</SelectItem>
-                                  <SelectItem value="POST">POST</SelectItem>
-                                  <SelectItem value="PUT">PUT</SelectItem>
-                                  <SelectItem value="DELETE">DELETE</SelectItem>
-                                  <SelectItem value="PATCH">PATCH</SelectItem>
-                                  <SelectItem value="OPTIONS">
-                                    OPTIONS
-                                  </SelectItem>
-                                  <SelectItem value="HEAD">HEAD</SelectItem>
-                                  <SelectItem value="ALL">ALL</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            
-                            <div className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                              <Checkbox
-                                id="skipUserTokenValidation"
-                                checked={tempRule.skipUserTokenValidation}
-                                onCheckedChange={(checked) =>
-                                  setTempRule({
-                                    ...tempRule,
-                                    skipUserTokenValidation: checked as boolean,
-                                  })
-                                }
-                              />
-                              <div className="space-y-0.5">
-                                <Label htmlFor="skipUserTokenValidation">
-                                  Skip User Token Validation
-                                </Label>
-                                <p className="text-sm text-muted-foreground">
-                                  Check if you want to skip user token validation for this rule.
-                                </p>
+                          <ScrollArea className="h-[60vh] pr-4">
+                            <div className="grid gap-4 py-4">
+                              <div className="grid grid-cols-1 gap-2">
+                                <Label htmlFor="priority">Priority</Label>
+                                <Input
+                                  id="priority"
+                                  type="number"
+                                  placeholder="Priority"
+                                  value={tempRule.priority || 0}
+                                  onChange={(e) =>
+                                    setTempRule({
+                                      ...tempRule,
+                                      priority: parseInt(e.target.value),
+                                    })
+                                  }
+                                />
                               </div>
-                            </div>
-                            
-                            <div className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                              <Checkbox
-                                id="skipUserTokenExpiryValidation"
-                                checked={tempRule.skipUserTokenExpiryValidation}
-                                onCheckedChange={(checked) =>
-                                  setTempRule({
-                                    ...tempRule,
-                                    skipUserTokenExpiryValidation: checked as boolean,
-                                  })
-                                }
-                              />
-                              <div className="space-y-0.5">
-                                <Label htmlFor="skipUserTokenExpiryValidation">
-                                  Skip User Token Expiry Validation
-                                </Label>
-                                <p className="text-sm text-muted-foreground">
-                                  Check if you want to skip user token expiry validation for this rule.
-                                </p>
+                              <div className="grid grid-cols-1 gap-2">
+                                <Label htmlFor="description">Description</Label>
+                                <Input
+                                  id="description"
+                                  placeholder="Description (optional)"
+                                  value={tempRule.description || ""}
+                                  onChange={(e) =>
+                                    setTempRule({
+                                      ...tempRule,
+                                      description: e.target.value,
+                                    })
+                                  }
+                                />
                               </div>
-                            </div>
-
-                            {isEditingRule && (
-                              <>
-                                <div className="grid grid-cols-1 gap-2">
-                                  <Label htmlFor="fields">Fields</Label>
-                                  <Input
-                                    id="fields"
-                                    placeholder="Fields"
-                                    value={
-                                      tempRule.responseModeration.fields || ""
-                                    }
-                                    readOnly
-                                  />
-                                </div>
-                                <div className="grid grid-cols-1 gap-2">
-                                  <Label htmlFor="responseFilterCriteria">
-                                    Response Filter Criteria
+                              <div className="grid grid-cols-1 gap-2">
+                                <Label htmlFor="requestedURL">
+                                  Requested URL
+                                </Label>
+                                <Input
+                                  id="requestedURL"
+                                  placeholder="Requested URL"
+                                  value={tempRule.requestedURL || ""}
+                                  onChange={(e) =>
+                                    setTempRule({
+                                      ...tempRule,
+                                      requestedURL: e.target.value,
+                                    })
+                                  }
+                                />
+                              </div>
+                              <div className="grid grid-cols-1 gap-2">
+                                <Label htmlFor="scopes">Scopes</Label>
+                                <Input
+                                  id="scopes"
+                                  placeholder="Scopes (comma separated)"
+                                  value={
+                                    Array.isArray(tempRule.scopes)
+                                      ? tempRule.scopes.join(",")
+                                      : tempRule.scopes || ""
+                                  }
+                                  onChange={(e) =>
+                                    setTempRule({
+                                      ...tempRule,
+                                      scopes: e.target.value.split(","),
+                                    })
+                                  }
+                                />
+                              </div>
+                              <div className="grid grid-cols-1 gap-2">
+                                <Label htmlFor="requestedMethod">
+                                  Requested Method
+                                </Label>
+                                <Select
+                                  onValueChange={(value) =>
+                                    setTempRule({
+                                      ...tempRule,
+                                      requestedMethod: value as
+                                        | "GET"
+                                        | "POST"
+                                        | "PUT"
+                                        | "DELETE"
+                                        | "PATCH"
+                                        | "OPTIONS"
+                                        | "HEAD"
+                                        | "ALL",
+                                    })
+                                  }
+                                  value={tempRule.requestedMethod}
+                                  defaultValue="GET"
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select a method" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="GET">GET</SelectItem>
+                                    <SelectItem value="POST">POST</SelectItem>
+                                    <SelectItem value="PUT">PUT</SelectItem>
+                                    <SelectItem value="DELETE">DELETE</SelectItem>
+                                    <SelectItem value="PATCH">PATCH</SelectItem>
+                                    <SelectItem value="OPTIONS">
+                                      OPTIONS
+                                    </SelectItem>
+                                    <SelectItem value="HEAD">HEAD</SelectItem>
+                                    <SelectItem value="ALL">ALL</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              
+                              <div className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                                <Checkbox
+                                  id="skipUserTokenValidation"
+                                  checked={tempRule.skipUserTokenValidation}
+                                  onCheckedChange={(checked) =>
+                                    setTempRule({
+                                      ...tempRule,
+                                      skipUserTokenValidation: checked as boolean,
+                                    })
+                                  }
+                                />
+                                <div className="space-y-0.5">
+                                  <Label htmlFor="skipUserTokenValidation">
+                                    Skip User Token Validation
                                   </Label>
-                                  <Input
-                                    id="responseFilterCriteria"
-                                    placeholder="Response Filter Criteria"
-                                    value={
-                                      tempRule.responseModeration
-                                        .responseFilterCriteria || ""
-                                    }
-                                    readOnly
-                                  />
+                                  <p className="text-sm text-muted-foreground">
+                                    Check if you want to skip user token validation for this rule.
+                                  </p>
                                 </div>
-                              </>
-                            )}
-                          </div>
+                              </div>
+                              
+                              <div className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                                <Checkbox
+                                  id="skipUserTokenExpiryValidation"
+                                  checked={tempRule.skipUserTokenExpiryValidation}
+                                  onCheckedChange={(checked) =>
+                                    setTempRule({
+                                      ...tempRule,
+                                      skipUserTokenExpiryValidation: checked as boolean,
+                                    })
+                                  }
+                                />
+                                <div className="space-y-0.5">
+                                  <Label htmlFor="skipUserTokenExpiryValidation">
+                                    Skip User Token Expiry Validation
+                                  </Label>
+                                  <p className="text-sm text-muted-foreground">
+                                    Check if you want to skip user token expiry validation for this rule.
+                                  </p>
+                                </div>
+                              </div>
+
+                              {isEditingRule && (
+                                <>
+                                  <div className="grid grid-cols-1 gap-2">
+                                    <Label htmlFor="fields">Fields</Label>
+                                    <Input
+                                      id="fields"
+                                      placeholder="Fields"
+                                      value={
+                                        tempRule.responseModeration.fields || ""
+                                      }
+                                      readOnly
+                                    />
+                                  </div>
+                                  <div className="grid grid-cols-1 gap-2">
+                                    <Label htmlFor="responseFilterCriteria">
+                                      Response Filter Criteria
+                                    </Label>
+                                    <Input
+                                      id="responseFilterCriteria"
+                                      placeholder="Response Filter Criteria"
+                                      value={
+                                        tempRule.responseModeration
+                                          .responseFilterCriteria || ""
+                                      }
+                                      readOnly
+                                    />
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </ScrollArea>
                           <DialogFooter>
                             <DialogClose asChild>
                               <Button type="button" variant="outline">
