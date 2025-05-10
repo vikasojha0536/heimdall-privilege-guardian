@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import {
   PrivilegeRequest,
@@ -160,21 +161,27 @@ const AccessRequests: React.FC = () => {
 
     try {
       setUpdateLoading(requestId);
+      
+      // Find the privilege request to get its rules
+      const currentRequest = requests.find(req => req.id === requestId);
+      if (!currentRequest) {
+        toast.error("Request not found");
+        return;
+      }
+      
       const updateRequest: PrivilegeUpdateRequest = {
         id: requestId,
         state: newState,
         calleeClientId: calleeClientId,
         callerClientId: callerClientId,
+        privilegeRules: currentRequest.privilegeRules, // Add the missing privilegeRules property
       };
-      console.log("newState", newState);
-      console.log("responseModeration", responseModeration);
-      console.log(":showResponseModeration", showResponseModeration);
+      
       // If we're granting or rejecting and have response moderation data, include it
       if (newState === "GRANTED" || newState === "REJECTED") {
         updateRequest.responseModeration = responseModeration;
-        console.log("updateRequest 1", updateRequest);
       }
-      console.log("updateRequest", updateRequest);
+      
       await updatePrivilegeState(updateRequest);
 
       setRequests((prevRequests) =>
