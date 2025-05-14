@@ -57,8 +57,12 @@ const Layout: React.FC = () => {
       >
         <div className="flex h-16 items-center border-b border-primary-foreground/20 px-4">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="bg-[#E20074] rounded h-7 w-7 flex items-center justify-center">
-              <span className="text-lg font-bold text-white">T</span>
+            <div className="bg-[#E20074] p-2 rounded">
+              <img
+                  src="public/lovable-uploads/c984b240-49e0-40ca-91a1-d9394eaba530.png"
+                  alt="T Logo"
+                  className="w-8 h-8"
+              />
             </div>
             <span className="text-xl font-bold text-primary-foreground">Heimdall</span>
           </Link>

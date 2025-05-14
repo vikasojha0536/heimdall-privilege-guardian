@@ -108,7 +108,7 @@ const handleResponse = async (response: Response) => {
 
 // Get current user's ID from localStorage
 export const getCurrentUserId = (): string => {
-  return localStorage.getItem('currentUserId') || 'dot--tyrell--westbound';
+  return localStorage.getItem('currentUserId') || 'dot--tyrell--northbound-mock';
 };
 
 // Fetch all privilege requests relevant to the user

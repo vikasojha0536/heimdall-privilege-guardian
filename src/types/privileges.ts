@@ -1,4 +1,3 @@
-
 export interface ResponseModeration {
   fields: string | null;
   responseFilterCriteria: string | null;
@@ -22,8 +21,8 @@ export interface PrivilegeRule {
     | "ALL"
     | "";
   responseModeration: ResponseModeration;
-  skipUserTokenValidation?: boolean;
-  skipUserTokenExpiryValidation?: boolean;
+  disableAccessTokenValidation?: boolean;
+  disableAccessTokenExpiryValidation?: boolean;
 }
 
 export type PrivilegeState =
@@ -65,8 +64,8 @@ export const emptyPrivilegeRule: PrivilegeRule = {
     fields: null,
     responseFilterCriteria: null,
   },
-  skipUserTokenValidation: false,
-  skipUserTokenExpiryValidation: false,
+  disableAccessTokenValidation: false,
+  disableAccessTokenExpiryValidation: false,
 };
 
 export const emptyPrivilegeRequest: PrivilegeRequest = {

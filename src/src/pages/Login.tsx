@@ -8,7 +8,7 @@ import { User } from 'lucide-react';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const [clientId, setClientId] = useState('dot--tyrell--westbound');
+  const [clientId, setClientId] = useState('dot--tyrell--northbound-mock');
 
   const handleLogin = () => {
     // Store the client ID in local storage

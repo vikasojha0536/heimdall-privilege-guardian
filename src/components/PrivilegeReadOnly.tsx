@@ -69,17 +69,6 @@ const PrivilegeReadOnly: React.FC<PrivilegeReadOnlyProps> = ({ privilege }) => {
         </div>
       </div>
 
-      <div className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-        <Checkbox checked={privilege.skipUserTokenExpiry} disabled />
-        <div className="space-y-0.5">
-          <Label>Skip User Token Expiry</Label>
-          <p className="text-sm text-muted-foreground">
-            This privilege {privilege.skipUserTokenExpiry ? "will" : "will not"}{" "}
-            skip user token expiry.
-          </p>
-        </div>
-      </div>
-
       <div>
         <Label>Privilege Rules</Label>
         <p className="text-sm text-muted-foreground mb-2">
@@ -95,6 +84,8 @@ const PrivilegeReadOnly: React.FC<PrivilegeReadOnlyProps> = ({ privilege }) => {
               <TableHead>Method</TableHead>
               <TableHead>Fields</TableHead>
               <TableHead>Response Filter Criteria</TableHead>
+              <TableHead>SkipUserTokenValidation</TableHead>
+              <TableHead>SkipUserTokenExpiryValidation</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -112,6 +103,12 @@ const PrivilegeReadOnly: React.FC<PrivilegeReadOnlyProps> = ({ privilege }) => {
                 <TableCell>{rule.responseModeration.fields}</TableCell>
                 <TableCell>
                   {rule.responseModeration.responseFilterCriteria}
+                </TableCell>
+                <TableCell>
+                  <Checkbox checked={rule.disableAccessTokenValidation} disabled />
+                </TableCell>
+                <TableCell>
+                  <Checkbox checked={rule.disableAccessTokenExpiryValidation} disabled />
                 </TableCell>
               </TableRow>
             ))}

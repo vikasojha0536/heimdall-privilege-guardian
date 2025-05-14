@@ -142,7 +142,6 @@ const AccessRequests: React.FC = () => {
       setResponseModerationContinue(true);
     } else if (newState === "GRANTED") {
       setShowResponseModeration(true);
-      console.log("requestId ==", requestId);
       setStateChangeConfirm({
         requestId,
         newState,
@@ -151,7 +150,6 @@ const AccessRequests: React.FC = () => {
         privilegeRules,
       });
     } else if (newState === "PENDING") {
-      console.log("newState", newState);
       // For other states, go directly to confirmation
       setStateChangeConfirm({
         requestId,
@@ -166,7 +164,6 @@ const AccessRequests: React.FC = () => {
 
   const confirmStateChange = async () => {
     if (!stateChangeConfirm) return;
-    console.log("stateChangeConfirm = ", stateChangeConfirm);
     const {
       requestId,
       newState,
@@ -189,7 +186,6 @@ const AccessRequests: React.FC = () => {
       //   updateRequest.responseModeration = responseModeration;
       //   console.log("updateRequest 1", updateRequest);
       // }
-      console.log("updateRequest", updateRequest);
       await updatePrivilegeState(updateRequest);
 
       setRequests((prevRequests) =>
@@ -288,16 +284,16 @@ const AccessRequests: React.FC = () => {
                         <div className="flex items-center gap-2">
                           {getStateBadge(request.state)}
                           <Select
-                              value={null}
-                            onValueChange={(value) =>
+                            value={null}
+                            onValueChange={(value) => {
                               handleStateChange(
                                 request.id!,
                                 value as PrivilegeState,
                                 request.calleeClientId,
                                 request.callerClientId,
                                 request.privilegeRules
-                              )
-                            }
+                              );
+                            }}
                           >
                             <SelectTrigger className="w-8 h-8 p-0 border-none shadow-none hover:bg-muted">
                               <Pencil className="h-4 w-4 text-muted-foreground" />
@@ -432,6 +428,7 @@ const AccessRequests: React.FC = () => {
                 onClick={() => {
                   setShowResponseModeration(false);
                   setResponseModerationContinue(false);
+                  setStateChangeConfirm(null);
                 }}
               >
                 Cancel
@@ -489,7 +486,9 @@ const AccessRequests: React.FC = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setStateChangeConfirm(null)}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmStateChange}
               className={
