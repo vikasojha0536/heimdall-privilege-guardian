@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Card,
@@ -85,49 +86,59 @@ const PrivilegeReadOnly: React.FC<PrivilegeReadOnlyProps> = ({ privilege }) => {
         <p className="text-sm text-muted-foreground mb-2">
           Rules defined for this privilege.
         </p>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]">Priority</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Requested URL</TableHead>
-              <TableHead>Scopes</TableHead>
-              <TableHead>Method</TableHead>
-              <TableHead>Fields</TableHead>
-              <TableHead>Response Filter Criteria</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {privilege.privilegeRules?.map((rule, index) => (
-              <TableRow key={index}>
-                <TableCell className="font-medium">{rule.priority}</TableCell>
-                <TableCell>{rule.description || "-"}</TableCell>
-                <TableCell>{rule.requestedURL}</TableCell>
-                <TableCell>
-                  {Array.isArray(rule.scopes)
-                    ? rule.scopes.join(", ")
-                    : rule.scopes || "-"}
-                </TableCell>
-                <TableCell>{rule.requestedMethod}</TableCell>
-                <TableCell>{rule.responseModeration.fields}</TableCell>
-                <TableCell>
-                  {rule.responseModeration.responseFilterCriteria}
-                </TableCell>
-              </TableRow>
-            ))}
-            {(!privilege.privilegeRules ||
-              privilege.privilegeRules.length === 0) && (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="text-center py-4 text-muted-foreground"
-                >
-                  No rules defined
-                </TableCell>
+                <TableHead className="w-[50px]">Priority</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Requested URL</TableHead>
+                <TableHead>Scopes</TableHead>
+                <TableHead>Method</TableHead>
+                <TableHead>Fields</TableHead>
+                <TableHead>Response Filter Criteria</TableHead>
+                <TableHead>Metadata</TableHead>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {privilege.privilegeRules?.map((rule, index) => (
+                <TableRow key={index}>
+                  <TableCell className="font-medium">{rule.priority}</TableCell>
+                  <TableCell>{rule.description || "-"}</TableCell>
+                  <TableCell>{rule.requestedURL}</TableCell>
+                  <TableCell>
+                    {Array.isArray(rule.scopes)
+                      ? rule.scopes.join(", ")
+                      : rule.scopes || "-"}
+                  </TableCell>
+                  <TableCell>{rule.requestedMethod}</TableCell>
+                  <TableCell>{rule.responseModeration.fields || "-"}</TableCell>
+                  <TableCell>
+                    {rule.responseModeration.responseFilterCriteria || "-"}
+                  </TableCell>
+                  <TableCell>
+                    <Textarea
+                      value={JSON.stringify(rule.metaData || {}, null, 2)}
+                      readOnly
+                      className="min-w-[200px] min-h-[60px] bg-gray-100 dark:bg-gray-800 font-mono text-sm"
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+              {(!privilege.privilegeRules ||
+                privilege.privilegeRules.length === 0) && (
+                <TableRow>
+                  <TableCell
+                    colSpan={8}
+                    className="text-center py-4 text-muted-foreground"
+                  >
+                    No rules defined
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       <div className="mt-4">
