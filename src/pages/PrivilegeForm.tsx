@@ -111,6 +111,7 @@ const formSchema = z.object({
           .optional(),
         skipUserTokenValidation: z.boolean().default(false),
         skipUserTokenExpiryValidation: z.boolean().default(false),
+        metaData: z.record(z.any()).optional(),
       })
     )
     .default([]),
@@ -130,7 +131,9 @@ const PrivilegeForm = () => {
     },
     skipUserTokenValidation: false,
     skipUserTokenExpiryValidation: false,
+    metaData: {},
   });
+  const [metadataString, setMetadataString] = useState("");
   const [isEditingRule, setIsEditingRule] = useState(false);
   const [editingRuleIndex, setEditingRuleIndex] = useState<number | null>(null);
 
@@ -179,6 +182,7 @@ const PrivilegeForm = () => {
                     responseFilterCriteria:
                       rule.responseModeration?.responseFilterCriteria || "",
                   },
+                  metaData: rule.metaData || {},
                 })) || [],
             };
 
@@ -225,6 +229,7 @@ const PrivilegeForm = () => {
           },
           skipUserTokenValidation: rule.skipUserTokenValidation || false,
           skipUserTokenExpiryValidation: rule.skipUserTokenExpiryValidation || false,
+          metaData: rule.metaData || {},
         })),
         state: "PENDING", // Always set to PENDING when creating/editing
       };
@@ -270,7 +275,9 @@ const PrivilegeForm = () => {
       },
       skipUserTokenValidation: rule.skipUserTokenValidation || false,
       skipUserTokenExpiryValidation: rule.skipUserTokenExpiryValidation || false,
+      metaData: rule.metaData || {},
     });
+    setMetadataString(JSON.stringify(rule.metaData || {}, null, 2));
     setIsEditingRule(true);
     setEditingRuleIndex(index);
     setIsDialogOpen(true);
@@ -280,6 +287,16 @@ const PrivilegeForm = () => {
     if (!isAddRuleEnabled()) {
       toast.error("Please fill in all required fields for the rule");
       return;
+    }
+
+    let parsedMetadata = {};
+    if (metadataString.trim()) {
+      try {
+        parsedMetadata = JSON.parse(metadataString);
+      } catch (error) {
+        toast.error("Invalid JSON format for metadata");
+        return;
+      }
     }
 
     const newRule: PrivilegeRule = {
@@ -299,6 +316,7 @@ const PrivilegeForm = () => {
       },
       skipUserTokenValidation: tempRule.skipUserTokenValidation || false,
       skipUserTokenExpiryValidation: tempRule.skipUserTokenExpiryValidation || false,
+      metaData: parsedMetadata,
     };
 
     const currentRules = form.getValues("privilegeRules") || [];
@@ -326,7 +344,9 @@ const PrivilegeForm = () => {
       },
       skipUserTokenValidation: false,
       skipUserTokenExpiryValidation: false,
+      metaData: {},
     });
+    setMetadataString("");
 
     setIsDialogOpen(false);
   };
@@ -528,7 +548,10 @@ const PrivilegeForm = () => {
                       >
                         <DialogTrigger
                           asChild
-                          onClick={() => setIsEditingRule(false)}
+                          onClick={() => {
+                            setIsEditingRule(false);
+                            setMetadataString("");
+                          }}
                         >
                           <Button type="button" variant="outline" size="sm">
                             <Plus className="mr-2 h-4 w-4" />
@@ -653,6 +676,20 @@ const PrivilegeForm = () => {
                                 </Select>
                               </div>
                               
+                              <div className="grid grid-cols-1 gap-2">
+                                <Label htmlFor="metadata">Metadata</Label>
+                                <Textarea
+                                  id="metadata"
+                                  placeholder='{"key": "value", "example": "data"}'
+                                  value={metadataString}
+                                  onChange={(e) => setMetadataString(e.target.value)}
+                                  className="min-h-[100px] font-mono text-sm"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  Enter metadata as JSON object (key-value pairs)
+                                </p>
+                              </div>
+                              
                               <div className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
                                 <Checkbox
                                   id="skipUserTokenValidation"
@@ -703,7 +740,7 @@ const PrivilegeForm = () => {
                                       id="fields"
                                       placeholder="Fields"
                                       value={
-                                        tempRule.responseModeration.fields || ""
+                                        tempRule.responseModeration?.fields || ""
                                       }
                                       readOnly
                                     />
@@ -717,7 +754,7 @@ const PrivilegeForm = () => {
                                       placeholder="Response Filter Criteria"
                                       value={
                                         tempRule.responseModeration
-                                          .responseFilterCriteria || ""
+                                          ?.responseFilterCriteria || ""
                                       }
                                       readOnly
                                     />

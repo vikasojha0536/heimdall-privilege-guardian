@@ -24,6 +24,7 @@ export interface PrivilegeRule {
   responseModeration: ResponseModeration;
   skipUserTokenValidation?: boolean;
   skipUserTokenExpiryValidation?: boolean;
+  metaData?: Record<string, any>;
 }
 
 export type PrivilegeState =
@@ -67,6 +68,7 @@ export const emptyPrivilegeRule: PrivilegeRule = {
   },
   skipUserTokenValidation: false,
   skipUserTokenExpiryValidation: false,
+  metaData: {},
 };
 
 export const emptyPrivilegeRequest: PrivilegeRequest = {
